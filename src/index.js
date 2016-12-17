@@ -148,7 +148,10 @@ function onSessionEnded(sessionEndedRequest, session) {
 /**
  * Helpers that build all of the responses.
  */
-function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
+function buildSpeechletResponse(title, output, repromptText, shouldEndSession, cardText, cardType) {
+
+    if (typeof cardType == 'undefined') cardType = "Simple";  // Standard
+    if (typeof cardText == 'undefined') cardText = output;
     return {
         outputSpeech: {
             type: "SSML", //PlainText or SSML
@@ -156,9 +159,9 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
           //  text: output
         },
         card: {
-            type: "Simple",
+            type: cardType,
             title: "20Q - " + title,
-            content: output
+            content: cardText
         },
         reprompt: {
             outputSpeech: {
@@ -245,9 +248,9 @@ function askNextQuestion(uri, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q won!", "Woo hoo! I win!", "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("20Q won!", "Woohoo! I win!", "", true));
             } else {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q lost!", "Alright, I give up!", "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("20Q lost!", "Alright, I give up! You win!", "", true));
             }
         } else {
             var optionelements = $('big nobr a');
@@ -260,9 +263,9 @@ function askNextQuestion(uri, session, callback) {
                 sessionAttributes.options[optionname] = optionURI;
             }
 
-            // var question = $('big b').childNodes[0].nodeValue.replace(/(&nbsp;|\s)/i,'');
+           
             var question = $('big b').text().split(/[\r\n]/)[0].replace(/(&nbsp;)/i,'').trim();
-
+            question = question.replace('Q', 'Question ');
             sessionAttributes.questionType = 'question';
             sessionAttributes.questionNum += 1;
             sessionAttributes.questionText = question;
@@ -324,15 +327,20 @@ function startGame(callback) {
                 'I love this game. ',
                 'Lets play. ',
                 'Lets go. ',
+                'Ok. ',
+                'Is it an ',
                 '20 Questions? I\'ll only need 10. '
             ];
-            var startgametext = "<p>" + startgamephrases[randomInt(0, startgamephrases.length)] + "</p>";
+            var intro = startgamephrases[randomInt(0, startgamephrases.length)];
+            var startgametext = "<p>" + intro + "</p>";
 
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
             sessionAttributes.questionText = listtext + "?";
 
-            callback(sessionAttributes, buildSpeechletResponse("New Game", startgametext + "<p>" + listtext + "?</p>", listtext + "?", false));
+            var cardText = 'Q1. ' + listtext + '?';
+
+            callback(sessionAttributes, buildSpeechletResponse("New Game", startgametext + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
         });
     });
 
