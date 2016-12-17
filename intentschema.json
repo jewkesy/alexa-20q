@@ -13,10 +13,6 @@
             "slots": []
         },
         {
-            "intent": "ConceptIntent",
-            "slots": []
-        },
-        {
             "intent": "OtherIntent",
             "slots": []
         },

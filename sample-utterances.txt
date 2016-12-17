@@ -1,7 +1,6 @@
 AnimalIntent animal
 VegetableIntent vegetable
 MineralIntent mineral
-ConceptIntent concept
 OtherIntent other
 YesIntent yes
 NoIntent no

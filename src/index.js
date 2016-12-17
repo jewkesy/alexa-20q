@@ -88,8 +88,8 @@ function onIntent(intentRequest, session, callback) {
                     return processAnswer('Vegetable', session, callback);
                 case "MineralIntent":
                     return processAnswer('Mineral', session, callback);
-                case "ConceptIntent":
-                    return processAnswer('Concept', session, callback);
+                case "OtherIntent":
+                    return processAnswer('Other', session, callback);
                 case "UnknownIntent":
                     return processAnswer('Unknown', session, callback);
                 default: 
