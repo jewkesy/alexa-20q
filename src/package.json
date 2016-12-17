@@ -1,0 +1,16 @@
+{
+  "name": "alexa-20q",
+  "version": "0.0.1",
+  "description": "Play 20 Questions with Alexa",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Greg \"OverloadUT\" Laabs <OverloadUT@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.1.4",
+    "cheerio": "^0.22.0",
+    "request": "^2.79.0"
+  }
+}
