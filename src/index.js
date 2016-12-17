@@ -1,11 +1,14 @@
 var request = require('request');
 var cheerio = require('cheerio');
 
-var ALEXA_APP_ID = undefined;
-var TWENTY_QUESTIONS_DATA_URL = 'http://y.20q.net';
-var TWENTY_QUESTIONS_HOME_URL = 'http://www.20q.net';
+var ALEXA_APP_ID = process.env.appID;
+var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
+var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
+
+const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time"];
+const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done"];
 
 // Route the incoming request based on type (LaunchRequest, IntentRequest,
 // etc.) The JSON body of the request is provided in the event parameter.
@@ -248,9 +251,9 @@ function askNextQuestion(uri, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q won!", "Woohoo! I win!", "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("20Q won!", "I win! " + winOpts[randomInt(0, winOpts.length)], "", true));
             } else {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q lost!", "Alright, I give up! You win!", "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("20Q lost!", "You win! " + loseOpts[randomInt(0, loseOpts.length)], "", true));
             }
         } else {
             var optionelements = $('big nobr a');
