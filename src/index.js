@@ -76,12 +76,15 @@ function onIntent(intentRequest, session, callback) {
     var sessionAttributes = session.attributes;
 
     if(typeof sessionAttributes !== 'undefined') {
-        // We have a game going
 
-        // questionType can be "first", "question", or "guess"
         if(sessionAttributes.questionType == 'first') {
 
             switch(intentName) {
+                case "StopIntent":
+                case "CancelIntent":
+                    return stop(intentName, session, callback);
+                case "HelpIntent":
+                    return processGameHelp(true, session, callback);
                 case "AnimalIntent":
                     return processAnswer('Animal', session, callback);
                 case "VegetableIntent":
@@ -93,12 +96,17 @@ function onIntent(intentRequest, session, callback) {
                 case "UnknownIntent":
                     return processAnswer('Unknown', session, callback);
                 default: 
-                    return invalidAnswer(session, callback);
+                    return invalidAnswer(intentName, session, callback);
             }
 
         } else if (sessionAttributes.questionType == 'question') {
 
             switch(intentName) {
+                case "StopIntent":
+                case "CancelIntent":
+                    return stop(intentName, session, callback);
+                case "HelpIntent":
+                    return processGameHelp(false, session, callback);
                 case "YesIntent":
                     return processAnswer('Yes', session, callback);
                 case "NoIntent":
@@ -130,7 +138,7 @@ function onIntent(intentRequest, session, callback) {
                 case "CloseIntent":
                     return processAnswer('Close', session, callback);
                 default: 
-                    return invalidAnswer(session, callback);
+                    return invalidAnswer(intentName, session, callback);
             }
         }
 
@@ -163,7 +171,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
         },
         card: {
             type: cardType,
-            title: "20Q - " + title,
+            title: "Twenty Questions - " + title,
             content: cardText
         },
         reprompt: {
@@ -185,30 +193,52 @@ function buildResponse(sessionAttributes, speechletResponse) {
     };
 }
 
+function stop(intent, session, callback) {
+    var sessionAttributes = session.attributes;
+    callback(sessionAttributes, buildSpeechletResponse("Goodbye", "Thanks for playing", "", true));
+}
+
 function unknownAnswer(session, callback) {
     var sessionAttributes = session.attributes;
 
-    var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+    // var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
 
-    var repeattext = "<p>You can say " + optionlist + "</p><p>" + sessionAttributes.questionText + "</p>";
-    var questiontext = "<p>Sorry, I didn't understand the answer.</p>" + repeattext;
+    // var repeattext = "<p>You can say " + optionlist + "</p><p>" + sessionAttributes.questionText + "</p>";
+    var questiontext = "Sorry, I didn't understand the answer. Please try again or say help."; // + repeattext;
+    var repeattext = "";
 
     callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, repeattext, false));
 }
 
-function invalidAnswer(session, callback) {
+function invalidAnswer(intent, session, callback) {
+    // console.log(intent);
     var sessionAttributes = session.attributes;
 
     var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-    var repeattext = "";
-    repeattext = "<p>You can say " + optionlist + "</p>";
+   
+    // repeattext = "<p>You can say " + optionlist + "</p>";
+    var questiontext = "Sorry, that was not a valid answer. ";
+    var repeattext = sessionAttributes.questionText;
 
-    if(optionlist[0] == 'Animal' && optionlist[1] == 'Vegetable') {}
-    else {repeattext += "<p>" + sessionAttributes.questionText +  "</p>";}
-
-    var questiontext = "<p>Sorry, that was not a valid answer.</p>" + repeattext;
+    if(sessionAttributes.questionNum.toString() == '1') {
+        questiontext += "You can say " + optionlist;
+    } else {
+        questiontext += "Please try again or ask for help. " + repeattext
+    }
 
     callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, repeattext, false));
+}
+
+function processGameHelp(firstQuestion, session, callback) {
+    var sessionAttributes = session.attributes;
+    var text = "Think of an object and I will try to guess what it is within twenty questions. ";
+    if (firstQuestion) {
+        text += "Is it an " + buildNaturalLangList(Object.keys(sessionAttributes.options), 'or')
+    } else {
+        text = "You can say " + buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+    }
+
+    callback(sessionAttributes, buildSpeechletResponse("Help", text, "reprompt", false));
 }
 
 function processAnswer(answer, session, callback) {
@@ -251,9 +281,9 @@ function askNextQuestion(uri, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q won!", "I win! " + winOpts[randomInt(0, winOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win! " + winOpts[randomInt(0, winOpts.length)], "", true));
             } else {
-                return callback(sessionAttributes, buildSpeechletResponse("20Q lost!", "You win! " + loseOpts[randomInt(0, loseOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win! " + loseOpts[randomInt(0, loseOpts.length)], "", true));
             }
         } else {
             var optionelements = $('big nobr a');
@@ -273,7 +303,7 @@ function askNextQuestion(uri, session, callback) {
             sessionAttributes.questionNum += 1;
             sessionAttributes.questionText = question;
 
-            var listtext = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+            // var listtext = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
 
             callback(sessionAttributes,
                 buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + " If you are unsure, you can say 'I don't know.'", false));
@@ -331,7 +361,6 @@ function startGame(callback) {
                 'Lets play. ',
                 'Lets go. ',
                 'Ok. ',
-                'Is it an ',
                 '20 Questions? I\'ll only need 10. '
             ];
             var intro = startgamephrases[randomInt(0, startgamephrases.length)];
@@ -343,7 +372,7 @@ function startGame(callback) {
 
             var cardText = 'Q1. ' + listtext + '?';
 
-            callback(sessionAttributes, buildSpeechletResponse("New Game", startgametext + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
+            callback(sessionAttributes, buildSpeechletResponse("New Game. " + intro, startgametext + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
         });
     });
 

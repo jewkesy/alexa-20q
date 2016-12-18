@@ -1,6 +1,16 @@
 {
     "intents": [
         {
+            "intent":"StopIntent"
+        },
+        {
+            "intent":"CancelIntent"
+        },
+        {
+            "intent": "HelpIntent",
+            "slots": []
+        },
+        {
             "intent": "AnimalIntent",
             "slots": []
         },

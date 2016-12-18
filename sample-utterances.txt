@@ -1,3 +1,6 @@
+StopIntent stop
+CancelIntent cancel
+HelpIntent help
 AnimalIntent animal
 VegetableIntent vegetable
 MineralIntent mineral
