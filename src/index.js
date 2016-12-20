@@ -4,6 +4,7 @@ var cheerio = require('cheerio');
 var ALEXA_APP_ID = process.env.appID;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
 var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
+var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
@@ -204,10 +205,9 @@ function unknownAnswer(session, callback) {
     // var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
 
     // var repeattext = "<p>You can say " + optionlist + "</p><p>" + sessionAttributes.questionText + "</p>";
-    var questiontext = "Sorry, I didn't understand the answer. Please try again or say help."; // + repeattext;
-    var repeattext = "";
+    var questiontext = "Sorry, I didn't understand the answer.\nPlease try again or say help."; // + repeattext;
 
-    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, repeattext, false));
+    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, sessionAttributes.questionText, false));
 }
 
 function invalidAnswer(intent, session, callback) {
@@ -217,35 +217,37 @@ function invalidAnswer(intent, session, callback) {
     var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
    
     // repeattext = "<p>You can say " + optionlist + "</p>";
-    var questiontext = "Sorry, that was not a valid answer. ";
-    var repeattext = sessionAttributes.questionText;
+    var questiontext = "Sorry, that was not a valid answer.\n";
 
     if(sessionAttributes.questionNum.toString() == '1') {
         questiontext += "You can say " + optionlist;
     } else {
-        questiontext += "Please try again or ask for help. " + repeattext
+        questiontext += "Please try again or ask for help.\n" + sessionAttributes.questionText;
     }
 
-    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, repeattext, false));
+    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, sessionAttributes.questionText, false));
 }
 
 function processGameHelp(firstQuestion, session, callback) {
     var sessionAttributes = session.attributes;
-    var text = "Think of an object and I will try to guess what it is within twenty questions. ";
+    var text = "Think of an object and I will try to guess what it is within twenty questions.\n";
+
+    var opts = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+
     if (firstQuestion) {
-        text += "Is it an " + buildNaturalLangList(Object.keys(sessionAttributes.options), 'or')
+        text += "Is it an " + opts;
     } else {
-        text = "You can say " + buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+        text = "You can say " + opts + '.\n' + sessionAttributes.questionText;
     }
 
-    callback(sessionAttributes, buildSpeechletResponse("Help", text, "reprompt", false));
+    callback(sessionAttributes, buildSpeechletResponse("Help", text, sessionAttributes.questionText, false));
 }
 
 function processAnswer(answer, session, callback) {
     var sessionAttributes = session.attributes;
 
-    if(sessionAttributes.options[answer] === undefined) {
-        return invalidAnswer(session, callback);
+    if (sessionAttributes.options[answer] === undefined) {
+        return invalidAnswer(answer, session, callback);
     } else {
         var uri = sessionAttributes.options[answer];
         return askNextQuestion(uri, session, callback);
@@ -257,6 +259,7 @@ function askNextQuestion(uri, session, callback) {
 
     var reqoptions = {
         url: TWENTY_QUESTIONS_DATA_URL + uri,
+        timeout: TIMEOUT,
         headers: {
             'Referer': TWENTY_QUESTIONS_DATA_URL + lang
         }
@@ -281,9 +284,9 @@ function askNextQuestion(uri, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win! " + winOpts[randomInt(0, winOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win!\n" + winOpts[randomInt(0, winOpts.length)], "", true));
             } else {
-                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win! " + loseOpts[randomInt(0, loseOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true));
             }
         } else {
             var optionelements = $('big nobr a');
@@ -303,10 +306,8 @@ function askNextQuestion(uri, session, callback) {
             sessionAttributes.questionNum += 1;
             sessionAttributes.questionText = question;
 
-            // var listtext = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-
             callback(sessionAttributes,
-                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + " If you are unsure, you can say 'I don't know.'", false));
+                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + "\nIf you are unsure, you can say 'I don't know.'", false));
         }
     });
 }
@@ -320,12 +321,21 @@ function startGame(callback) {
 
     var reqoptions = {
         url: TWENTY_QUESTIONS_DATA_URL + lang,
+        timeout: TIMEOUT,
         headers: {
             'Referer': TWENTY_QUESTIONS_HOME_URL + '/play.html'
         }
     };
     
     request(reqoptions, function(err, response, html){
+        if(err) {
+            var msg =  "There was an error accessing the twenty questions website. ";
+            
+            if (err.code === 'ETIMEDOUT') { msg += " Please try again in a few moments. "; } 
+            console.log(msg, err);
+            return callback(sessionAttributes, buildSpeechletResponse("App Error - " + err, msg, msg, true));
+        }
+
         var $ = cheerio.load(html);
         var newgameuri = $('form').first().attr('action');
 
@@ -364,15 +374,14 @@ function startGame(callback) {
                 '20 Questions? I\'ll only need 10. '
             ];
             var intro = startgamephrases[randomInt(0, startgamephrases.length)];
-            var startgametext = "<p>" + intro + "</p>";
 
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
             sessionAttributes.questionText = listtext + "?";
 
-            var cardText = 'Q1. ' + listtext + '?';
+            var cardText = '\nQuestion 1. ' + listtext + '?';
 
-            callback(sessionAttributes, buildSpeechletResponse("New Game. " + intro, startgametext + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
+            callback(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
         });
     });
 
