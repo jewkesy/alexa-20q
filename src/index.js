@@ -153,8 +153,7 @@ function onIntent(intentRequest, session, callback) {
  * Is not called when the app returns shouldEndSession=true.
  */
 function onSessionEnded(sessionEndedRequest, session) {
-    console.log("onSessionEnded requestId=" + sessionEndedRequest.requestId +
-                ", sessionId=" + session.sessionId);
+    console.log("onSessionEnded requestId=" + sessionEndedRequest.requestId + ", sessionId=" + session.sessionId);
 }
 
 /**
@@ -201,13 +200,7 @@ function stop(intent, session, callback) {
 
 function unknownAnswer(session, callback) {
     var sessionAttributes = session.attributes;
-
-    // var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-
-    // var repeattext = "<p>You can say " + optionlist + "</p><p>" + sessionAttributes.questionText + "</p>";
-    var questiontext = "Sorry, I didn't understand the answer.\nPlease try again or say help."; // + repeattext;
-
-    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", questiontext, sessionAttributes.questionText, false));
+    callback(sessionAttributes, buildSpeechletResponse("Invalid Answer", "Sorry, I didn't understand the answer.\nPlease try again or say help.", sessionAttributes.questionText, false));
 }
 
 function invalidAnswer(intent, session, callback) {
@@ -269,7 +262,8 @@ function askNextQuestion(uri, answer, session, callback) {
         if (err) {
             console.log("Error requesting " + uri, err);
             return callback(sessionAttributes,
-                buildSpeechletResponse("App Error", "There was an error accessing the twenty questions website. Try repeating your answer.", "There was an error accessing the twenty questions. Try repeating your answer.", false));
+                buildSpeechletResponse("App Error", "There was an error accessing the 20q website. Try repeating your answer.", 
+                    "There was an error accessing the 20q websites. Try repeating your answer.", false));
         }
 
         var $;
@@ -278,14 +272,15 @@ function askNextQuestion(uri, answer, session, callback) {
         } catch (e) {
             console.log("Exception when trying to parse html with Cheerio.", e, html);
             return callback(sessionAttributes,
-                buildSpeechletResponse("App Error", "There was an error with the 20q website. Try repeating your question.", "There was an error with the 20q website. Try repeating your question.", false));
+                buildSpeechletResponse("App Error", "There was an error with the 20q website. Try repeating your question.", 
+                    "There was an error with the 20q website. Try repeating your question.", false));
         }
 
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win!\n" + winOpts[randomInt(0, winOpts.length)], "", true, sessionAttributes.history));
+                return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
             } else {
                 return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
             }
@@ -310,8 +305,8 @@ function askNextQuestion(uri, answer, session, callback) {
             sessionAttributes.questionText = question;
             
             callback(sessionAttributes,
-                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + "\nIf you are unsure, you can say 'I don't know.'", 
-                    false));
+                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, 
+                    question + "\nIf you are unsure, you can say 'I don't know.'",  false));
         }
     });
 }
