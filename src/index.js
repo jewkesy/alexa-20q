@@ -283,10 +283,11 @@ function askNextQuestion(uri, answer, session, callback) {
 
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
+            sessionAttributes.history += answer;
             if($('h2').first().text() == "20Q won!") {
-                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win!\n" + winOpts[randomInt(0, winOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I won!", "I win!\n" + winOpts[randomInt(0, winOpts.length)], "", true, sessionAttributes.history));
             } else {
-                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true));
+                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
             }
         } else {
             var optionelements = $('big nobr a');
@@ -299,17 +300,18 @@ function askNextQuestion(uri, answer, session, callback) {
                 sessionAttributes.options[optionname] = optionURI;
             }
 
-           
             var question = $('big b').text().split(/[\r\n]/)[0].replace(/(&nbsp;)/i,'').trim();
+
+            sessionAttributes.history += answer + "\n" + question + " ";
+
             question = question.replace('Q', 'Question ');
             sessionAttributes.questionType = 'question';
             sessionAttributes.questionNum += 1;
             sessionAttributes.questionText = question;
-            //sessionAttributes.history = "\nQ" + questionNum + ". " + question + "? " + answer;
-
+            
             callback(sessionAttributes,
                 buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + "\nIf you are unsure, you can say 'I don't know.'", 
-                    false, sessionAttributes.history));
+                    false));
         }
     });
 }
@@ -381,7 +383,7 @@ function startGame(callback) {
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
             sessionAttributes.questionText = listtext + "?";
-            sessionAttributes.history = "\nQ1. " + listtext + "? ";
+            sessionAttributes.history = "\nQ1.  " + listtext + "? ";
 
             var cardText = '\nQuestion 1. ' + listtext + '?';
 
