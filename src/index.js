@@ -250,11 +250,11 @@ function processAnswer(answer, session, callback) {
         return invalidAnswer(answer, session, callback);
     } else {
         var uri = sessionAttributes.options[answer];
-        return askNextQuestion(uri, session, callback);
+        return askNextQuestion(uri, answer, session, callback);
     }
 }
 
-function askNextQuestion(uri, session, callback) {
+function askNextQuestion(uri, answer, session, callback) {
     var sessionAttributes = session.attributes;
 
     var reqoptions = {
@@ -305,9 +305,11 @@ function askNextQuestion(uri, session, callback) {
             sessionAttributes.questionType = 'question';
             sessionAttributes.questionNum += 1;
             sessionAttributes.questionText = question;
+            //sessionAttributes.history = "\nQ" + questionNum + ". " + question + "? " + answer;
 
             callback(sessionAttributes,
-                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + "\nIf you are unsure, you can say 'I don't know.'", false));
+                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, question + "\nIf you are unsure, you can say 'I don't know.'", 
+                    false, sessionAttributes.history));
         }
     });
 }
@@ -373,11 +375,13 @@ function startGame(callback) {
                 'Ok. ',
                 '20 Questions? I\'ll only need 10. '
             ];
+
             var intro = startgamephrases[randomInt(0, startgamephrases.length)];
 
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
             sessionAttributes.questionText = listtext + "?";
+            sessionAttributes.history = "\nQ1. " + listtext + "? ";
 
             var cardText = '\nQuestion 1. ' + listtext + '?';
 
