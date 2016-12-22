@@ -71,7 +71,7 @@ function onIntent(intentRequest, session, callback) {
     //             ", sessionId=" + session.sessionId +
     //             ", intentName=" + intentRequest.intent.name);
 
-    console.log('onIntent', intentRequest)
+    // console.log('onIntent', intentRequest)
 
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
@@ -98,6 +98,8 @@ function onIntent(intentRequest, session, callback) {
                     return processAnswer('Other', session, callback);
                 case "UnknownIntent":
                     return processAnswer('Unknown', session, callback);
+                case "RepeatIntent":
+                    return repeatQuestion(intentName, session, callback);
                 default: 
                     return invalidAnswer(intentName, session, callback);
             }
@@ -138,8 +140,10 @@ function onIntent(intentRequest, session, callback) {
                     return processAnswer('Right', session, callback);
                 case "WrongIntent":
                     return processAnswer('Wrong', session, callback);
-                case "CloseIntent":
-                    return processAnswer('Close', session, callback);
+                case "NearlyIntent":
+                    return processAnswer('Nearly', session, callback);
+                case "RepeatIntent":
+                    return repeatQuestion(intentName, session, callback);
                 default: 
                     return invalidAnswer(intentName, session, callback);
             }
@@ -199,6 +203,13 @@ function stop(intent, session, callback) {
     var sessionAttributes = session.attributes;
     sessionAttributes.intent = intent;
     callback(sessionAttributes, buildSpeechletResponse("Goodbye", "Thanks for playing", "", true));
+}
+
+function repeatQuestion(intent, session, callback) {
+    var sessionAttributes = session.attributes;
+    callback(sessionAttributes,
+        buildSpeechletResponse("Question " + sessionAttributes.questionNum, sessionAttributes.questionText, 
+            sessionAttributes.questionText + "\nIf you are unsure, you can say 'I don't know.'",  false));
 }
 
 function unknownAnswer(session, callback) {
@@ -285,10 +296,10 @@ function askNextQuestion(uri, answer, session, callback) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
             if($('h2').first().text() == "20Q won!") {
-                console.log('20Q won', answer)
+                console.log('20Q won', sessionAttributes.questionText)
                 return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
             } else {
-                console.log('20Q lost', answer)
+                console.log('20Q lost', sessionAttributes.questionText)
                 return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
             }
         } else {
@@ -298,7 +309,7 @@ function askNextQuestion(uri, answer, session, callback) {
             for(var i = 0; i < optionelements.length; i++) {
                 var optionname = $(optionelements[i]).text().replace(/(&nbsp;)/i,'').trim();
                 var optionURI = $(optionelements[i]).attr('href');
-
+                if (optionname == 'Close') optionname = 'Nearly';
                 sessionAttributes.options[optionname] = optionURI;
             }
 
@@ -397,10 +408,11 @@ function startGame(callback) {
 
 function buildNaturalLangList(items, finalWord) {
     var output = '';
-    for(var i = 0; i<items.length; i++) {
+    for (var i = 0; i < items.length; i++) {
+        if (items[i] == 'Close') items[i] = 'Nearly';
         if(i === 0) {
             output += items[i];
-        } else if (i < items.length-1) {
+        } else if (i < items.length - 1) {
             output += ', ' + items[i];
         } else {
             output += ', ' + finalWord + ' ' + items[i];

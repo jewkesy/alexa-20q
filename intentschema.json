@@ -7,84 +7,67 @@
             "intent":"CancelIntent"
         },
         {
-            "intent": "HelpIntent",
-            "slots": []
+            "intent": "HelpIntent"
         },
         {
-            "intent": "AnimalIntent",
-            "slots": []
+            "intent": "AnimalIntent"
         },
         {
-            "intent": "VegetableIntent",
-            "slots": []
+            "intent": "VegetableIntent"
         },
         {
-            "intent": "MineralIntent",
-            "slots": []
+            "intent": "MineralIntent"
         },
         {
-            "intent": "OtherIntent",
-            "slots": []
+            "intent": "OtherIntent"
         },
         {
-            "intent": "YesIntent",
-            "slots": []
+            "intent": "YesIntent"
         },
         {
-            "intent": "NoIntent",
-            "slots": []
+            "intent": "NoIntent"
         },
         {
-            "intent": "UnknownIntent",
-            "slots": []
+            "intent": "UnknownIntent"
         },
         {
-            "intent": "IrrelevantIntent",
-            "slots": []
+            "intent": "IrrelevantIntent"
         },
         {
-            "intent": "SometimesIntent",
-            "slots": []
+            "intent": "SometimesIntent"
         },
         {
-            "intent": "MaybeIntent",
-            "slots": []
+            "intent": "MaybeIntent"
         },
         {
-            "intent": "ProbablyIntent",
-            "slots": []
+            "intent": "ProbablyIntent"
         },
         {
-            "intent": "DoubtfulIntent",
-            "slots": []
+            "intent": "DoubtfulIntent"
         },
         {
-            "intent": "UsuallyIntent",
-            "slots": []
+            "intent": "UsuallyIntent"
         },
         {
-            "intent": "DependsIntent",
-            "slots": []
+            "intent": "DependsIntent"
         },
         {
-            "intent": "RarelyIntent",
-            "slots": []
+            "intent": "RarelyIntent"
         },
         {
-            "intent": "PartlyIntent",
-            "slots": []
+            "intent": "PartlyIntent"
         },
         {
-            "intent": "RightIntent",
-            "slots": []
+            "intent": "RightIntent"
         },
         {
-            "intent": "WrongIntent",
-            "slots": []
+            "intent": "WrongIntent"
         },
         {
-            "intent": "CloseIntent",
-            "slots": []
+            "intent": "NearlyIntent"
+        },
+        {
+            "intent": "RepeatIntent"
         }
     ]
 }

@@ -1,6 +1,7 @@
 StopIntent stop
 CancelIntent cancel
 HelpIntent help
+HelpIntent help me
 AnimalIntent animal
 VegetableIntent vegetable
 MineralIntent mineral
@@ -22,15 +23,24 @@ DoubtfulIntent probably not
 DoubtfulIntent not really
 UsuallyIntent usually
 UsuallyIntent mostly
+DependsIntent depends
 DependsIntent it depends
 RarelyIntent rarely
 PartlyIntent partly
 PartlyIntent somewhat
 RightIntent right
+RightIntent that's right
 RightIntent correct
 RightIntent you got it
 WrongIntent wrong
 WrongIntent incorrect
 WrongIntent that's wrong
-CloseIntent close
-CloseIntent that was close
+NearlyIntent nearly
+NearlyIntent almost
+RepeatIntent repeat
+RepeatIntent repeat the question
+RepeatIntent say again
+RepeatIntent say the question
+RepeatIntent say the question again
+RepeatIntent I missed that
+RepeatIntent I didn't catch that
