@@ -1,5 +1,6 @@
 var request = require('request');
 var cheerio = require('cheerio');
+var console = require('tracer').colorConsole();
 
 var ALEXA_APP_ID = process.env.appID;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
@@ -51,15 +52,14 @@ exports.handler = function (event, context) {
  * Called when the session starts.
  */
 function onSessionStarted(sessionStartedRequest, session) {
-    console.log("onSessionStarted requestId=" + sessionStartedRequest.requestId + ", sessionId=" + session.sessionId);
+    // console.log("onSessionStarted requestId=" + sessionStartedRequest.requestId + ", sessionId=" + session.sessionId);
 }
 
 /**
  * Called when the user launches the app without specifying what they want.
  */
 function onLaunch(launchRequest, session, callback) {
-    console.log("onLaunch requestId=" + launchRequest.requestId + ", sessionId=" + session.sessionId);
-
+    // console.log("onLaunch requestId=" + launchRequest.requestId + ", sessionId=" + session.sessionId);
     startGame(callback);
 }
 
@@ -67,9 +67,11 @@ function onLaunch(launchRequest, session, callback) {
  * Called when the user specifies an intent for this application.
  */
 function onIntent(intentRequest, session, callback) {
-    console.log("onIntent requestId=" + intentRequest.requestId +
-                ", sessionId=" + session.sessionId +
-                ", intentName=" + intentRequest.intent.intentName);
+    // console.log("onIntent requestId=" + intentRequest.requestId +
+    //             ", sessionId=" + session.sessionId +
+    //             ", intentName=" + intentRequest.intent.name);
+
+    console.log('onIntent', intentRequest)
 
     var intent = intentRequest.intent,
         intentName = intentRequest.intent.name;
@@ -185,7 +187,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
 }
 
 function buildResponse(sessionAttributes, speechletResponse) {
-    console.log('buildReponse "'+speechletResponse.outputSpeech.text+'"');
+    //console.log('buildReponse', speechletResponse);
     return {
         version: "1.0",
         sessionAttributes: sessionAttributes,
@@ -195,6 +197,7 @@ function buildResponse(sessionAttributes, speechletResponse) {
 
 function stop(intent, session, callback) {
     var sessionAttributes = session.attributes;
+    sessionAttributes.intent = intent;
     callback(sessionAttributes, buildSpeechletResponse("Goodbye", "Thanks for playing", "", true));
 }
 
@@ -206,7 +209,7 @@ function unknownAnswer(session, callback) {
 function invalidAnswer(intent, session, callback) {
     // console.log(intent);
     var sessionAttributes = session.attributes;
-
+    sessionAttributes.intent = intent;
     var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
    
     // repeattext = "<p>You can say " + optionlist + "</p>";
@@ -223,6 +226,7 @@ function invalidAnswer(intent, session, callback) {
 
 function processGameHelp(firstQuestion, session, callback) {
     var sessionAttributes = session.attributes;
+    sessionAttributes.intent = 'HelpIntent';
     var text = "Think of an object and I will try to guess what it is within twenty questions.\n";
 
     var opts = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
@@ -238,6 +242,7 @@ function processGameHelp(firstQuestion, session, callback) {
 
 function processAnswer(answer, session, callback) {
     var sessionAttributes = session.attributes;
+    sessionAttributes.intent = answer;
 
     if (sessionAttributes.options[answer] === undefined) {
         return invalidAnswer(answer, session, callback);
@@ -280,8 +285,10 @@ function askNextQuestion(uri, answer, session, callback) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
             if($('h2').first().text() == "20Q won!") {
+                console.log('20Q won', answer)
                 return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
             } else {
+                console.log('20Q lost', answer)
                 return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
             }
         } else {
