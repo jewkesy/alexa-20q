@@ -9,11 +9,9 @@ var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
-const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time"];
-const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done"];
+const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy"];
+const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me"];
 
-// Route the incoming request based on type (LaunchRequest, IntentRequest,
-// etc.) The JSON body of the request is provided in the event parameter.
 exports.handler = function (event, context) {
     try {
         console.log("event.session.application.applicationId=" + event.session.application.applicationId, "amzn1.echo-sdk-ams.app." + ALEXA_APP_ID);
@@ -403,7 +401,6 @@ function startGame(callback) {
             callback(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
         });
     });
-
 }
 
 function buildNaturalLangList(items, finalWord) {
