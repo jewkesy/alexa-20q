@@ -9,12 +9,13 @@ var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
-const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy"];
-const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me"];
+const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy"];
+const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky"];
+const startgamephrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10'];
 
 exports.handler = function (event, context) {
     try {
-        console.log("event.session.application.applicationId=" + event.session.application.applicationId, "amzn1.echo-sdk-ams.app." + ALEXA_APP_ID);
+        // console.log("event.session.application.applicationId=" + event.session.application.applicationId, "amzn1.echo-sdk-ams.app." + ALEXA_APP_ID);
 
         // if (event.session.application.applicationId !== "amzn1.echo-sdk-ams.app." + ALEXA_APP_ID) {
         //     context.fail("Invalid Application ID");
@@ -167,6 +168,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
 
     if (typeof cardType == 'undefined') cardType = "Simple";  // Standard
     if (typeof cardText == 'undefined') cardText = output;
+
     return {
         outputSpeech: {
             type: "SSML", //PlainText or SSML
@@ -186,6 +188,14 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
         },
         shouldEndSession: shouldEndSession
     };
+}
+
+function handleSpeechQuerks(speech) {
+    if (speech.indexOf("Does it roll?") > -1) return speech.substring(0, speech.length - 1);
+    if (speech.indexOf("Does it have four legs?") > -1) return speech.substring(0, speech.length - 1);
+    if (speech.indexOf("Is it round?") > -1) return speech.substring(0, speech.length - 1);
+
+    return speech;
 }
 
 function buildResponse(sessionAttributes, speechletResponse) {
@@ -379,17 +389,7 @@ function startGame(callback) {
             }
 
             var listtext = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-            var startgamephrases = [
-                'I will read your mind. ',
-                'Prepare to be amazed. ',
-                'I love this game. ',
-                'Lets play. ',
-                'Lets go. ',
-                'Ok. ',
-                '20 Questions? I\'ll only need 10. '
-            ];
-
-            var intro = startgamephrases[randomInt(0, startgamephrases.length)];
+            var intro = startgamephrases[randomInt(0, startgamephrases.length)] + ". ";
 
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
