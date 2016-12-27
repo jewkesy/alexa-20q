@@ -311,13 +311,13 @@ function askNextQuestion(uri, answer, session, callback) {
             // console.log(sessionAttributes.questionText);
             var guess = getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
-                console.log('20Q won: ', guess);
-                writeToMongo(guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
+                console.log('20Q won: ', guess, session.user.userId);
+                writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
                     return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
                  });
             } else {
-                console.log('20Q lost: ', guess);
-                writeToMongo(guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
+                console.log('20Q lost: ', guess, session.user.userId);
+                writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
                     return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
                 });
             }
@@ -445,7 +445,7 @@ function buildNaturalLangList(items, finalWord) {
     return output;
 }
 
-function writeToMongo(word, num, type, win, callback) {
+function writeToMongo(userId, word, num, type, win, callback) {
     if (SAVE_TO_DB == 'false') return callback(null, {});
 
     MongoClient.connect(MONGODB_URI, function(err, db) {
@@ -457,6 +457,7 @@ function writeToMongo(word, num, type, win, callback) {
       
       var collection = db.collection('stats');
       collection.insertOne({
+        'userId': userId,
         'word': word,
         'num': num,
         'win': win,
@@ -492,20 +493,12 @@ function getGuessText(guessText) {
     // Question 17.  I am guessing that it is marble (the rock)
     // Question 17.  I am guessing that it is an ant eater?
     // Question 30.  I am guessing that it is an armadillo?
-    // console.log(guessText);
+
     var retVal = guessText.split("I am guessing that it is ")[1];
-    // console.log(retVal);
+
     if (retVal.slice(-1) == '?') retVal = retVal.substring(0, retVal.length - 1);
-    // console.log(retVal);
+
     return retVal;
-
-
-    // console.log(guessText);
-    // var retVal = guessText.split(".  I am guessing that it is ")[1];
-    // console.log(retVal);
-    // //if (retVal.slice(-1) == '?') retVal.substring(0, retVal.length - 1);
-
-    // return retVal;
 }
 
 function randomInt(low, high) {
