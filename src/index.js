@@ -5,6 +5,7 @@ var MongoClient = require('mongodb').MongoClient;
 
 var ALEXA_APP_ID = process.env.appID;
 var MONGODB_URI = process.env.mongoURI;
+var SAVE_TO_DB = process.env.savetoDB;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
 var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
 var TIMEOUT = parseInt(process.env.timeout);
@@ -307,18 +308,16 @@ function askNextQuestion(uri, answer, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
+            // console.log(sessionAttributes.questionText);
+            var guess = getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
-                writeToMongo(sessionAttributes.questionText, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
-                    console.log('win db write', err, results);
-
-                    console.log('20Q won', sessionAttributes.questionText)
+                console.log('20Q won: ', guess);
+                writeToMongo(guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
                     return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
                  });
             } else {
-                writeToMongo(sessionAttributes.questionText, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
-                    console.log('lose db write', err, results);
-            
-                    console.log('20Q lost', sessionAttributes.questionText)
+                console.log('20Q lost: ', guess);
+                writeToMongo(guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
                     return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
                 });
             }
@@ -447,7 +446,7 @@ function buildNaturalLangList(items, finalWord) {
 }
 
 function writeToMongo(word, num, type, win, callback) {
-    
+    if (SAVE_TO_DB == 'false') return callback(null, {});
 
     MongoClient.connect(MONGODB_URI, function(err, db) {
       if (err) {
@@ -472,7 +471,7 @@ function writeToMongo(word, num, type, win, callback) {
         // console.log('Saved to mongo', result)
 
         db.close();
-        return callback(null, result)
+        return callback(null, result);
 
         // collection.find({}).toArray(function(err, docs) {
         //     if (err) {
@@ -488,6 +487,26 @@ function writeToMongo(word, num, type, win, callback) {
     });
 }
 
+function getGuessText(guessText) {
+    // Question 17.  I am guessing that it is a panther?
+    // Question 17.  I am guessing that it is marble (the rock)
+    // Question 17.  I am guessing that it is an ant eater?
+    // Question 30.  I am guessing that it is an armadillo?
+    // console.log(guessText);
+    var retVal = guessText.split("I am guessing that it is ")[1];
+    // console.log(retVal);
+    if (retVal.slice(-1) == '?') retVal = retVal.substring(0, retVal.length - 1);
+    // console.log(retVal);
+    return retVal;
+
+
+    // console.log(guessText);
+    // var retVal = guessText.split(".  I am guessing that it is ")[1];
+    // console.log(retVal);
+    // //if (retVal.slice(-1) == '?') retVal.substring(0, retVal.length - 1);
+
+    // return retVal;
+}
 
 function randomInt(low, high) {
     return Math.floor(Math.random() * high);
