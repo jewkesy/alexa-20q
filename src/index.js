@@ -1,8 +1,10 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var console = require('tracer').colorConsole();
+var MongoClient = require('mongodb').MongoClient;
 
 var ALEXA_APP_ID = process.env.appID;
+var MONGODB_URI = process.env.mongoURI;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
 var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
 var TIMEOUT = parseInt(process.env.timeout);
@@ -262,6 +264,7 @@ function processGameHelp(firstQuestion, session, callback) {
 function processAnswer(answer, session, callback) {
     var sessionAttributes = session.attributes;
     sessionAttributes.intent = answer;
+    if (sessionAttributes.questionNum == 1) sessionAttributes.type = answer;
 
     if (sessionAttributes.options[answer] === undefined) {
         return invalidAnswer(answer, session, callback);
@@ -304,11 +307,19 @@ function askNextQuestion(uri, answer, session, callback) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
             if($('h2').first().text() == "20Q won!") {
-                console.log('20Q won', sessionAttributes.questionText)
-                return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
+                writeToMongo(sessionAttributes.questionText, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
+                    console.log('win db write', err, results);
+
+                    console.log('20Q won', sessionAttributes.questionText)
+                    return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
+                 });
             } else {
-                console.log('20Q lost', sessionAttributes.questionText)
-                return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
+                writeToMongo(sessionAttributes.questionText, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
+                    console.log('lose db write', err, results);
+            
+                    console.log('20Q lost', sessionAttributes.questionText)
+                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
+                });
             }
         } else {
             var optionelements = $('big nobr a');
@@ -433,6 +444,49 @@ function buildNaturalLangList(items, finalWord) {
 
     return output;
 }
+
+function writeToMongo(word, num, type, win, callback) {
+    
+
+    MongoClient.connect(MONGODB_URI, function(err, db) {
+      if (err) {
+        console.log('mongodb conn err', err);
+        return callback(err);
+      }
+      // console.log("Connected correctly to server");
+      
+      var collection = db.collection('stats');
+      collection.insertOne({
+        'word': word,
+        'num': num,
+        'win': win,
+        'type': type,
+        'timestamp': +new Date,
+        'datetime': new Date().toLocaleString()
+        }, function(err, result) {
+        if (err) {
+            console.log('mongodb save err', err);
+            return callback(err);
+          }
+        // console.log('Saved to mongo', result)
+
+        db.close();
+        return callback(null, docs)
+
+        // collection.find({}).toArray(function(err, docs) {
+        //     if (err) {
+        //         console.log('mongodb save err', err);
+        //         return callback(err);
+        //       }
+
+        //     // console.log(docs)
+        //     db.close();
+        //     return callback(null, docs)
+        // });
+      });
+    });
+}
+
 
 function randomInt(low, high) {
     return Math.floor(Math.random() * high);
