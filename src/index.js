@@ -196,6 +196,7 @@ function handleSpeechQuerks(speech) {
     if (speech.indexOf("Does it roll?") > -1) return speech.substring(0, speech.length - 1);
     if (speech.indexOf("Does it have four legs?") > -1) return speech.substring(0, speech.length - 1);
     if (speech.indexOf("Is it round?") > -1) return speech.substring(0, speech.length - 1);
+    if (speech.indexOf("Can you lift it?") > -1) return speech.substring(0, speech.length - 1);
 
     return speech;
 }
@@ -471,7 +472,7 @@ function writeToMongo(word, num, type, win, callback) {
         // console.log('Saved to mongo', result)
 
         db.close();
-        return callback(null, docs)
+        return callback(null, result)
 
         // collection.find({}).toArray(function(err, docs) {
         //     if (err) {
