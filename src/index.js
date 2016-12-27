@@ -168,7 +168,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
 
     if (typeof cardType == 'undefined') cardType = "Simple";  // Standard
     if (typeof cardText == 'undefined') cardText = output;
-
+    output = handleSpeechQuerks(output);
     return {
         outputSpeech: {
             type: "SSML", //PlainText or SSML
@@ -314,12 +314,24 @@ function askNextQuestion(uri, answer, session, callback) {
             var optionelements = $('big nobr a');
 
             sessionAttributes.options = {};
+
+            var rightURI;
+            var wrongURI;
+            var guess = false;
+
             for(var i = 0; i < optionelements.length; i++) {
                 var optionname = $(optionelements[i]).text().replace(/(&nbsp;)/i,'').trim();
                 var optionURI = $(optionelements[i]).attr('href');
-                if (optionname == 'Close') optionname = 'Nearly';
+                if (optionname == 'Close') {optionname = 'Nearly'; guess = true;}
+                else if (optionname == 'Right') {rightURI = optionURI; guess = true;}
+                else if (optionname == 'Wrong') {wrongURI = optionURI; guess = true;}
                 sessionAttributes.options[optionname] = optionURI;
             }
+            if (guess) {
+                sessionAttributes.options['Yes'] = rightURI;
+                sessionAttributes.options['No'] = wrongURI;
+            }
+            // console.log(sessionAttributes.options)
 
             var question = $('big b').text().split(/[\r\n]/)[0].replace(/(&nbsp;)/i,'').trim();
 
@@ -407,6 +419,9 @@ function buildNaturalLangList(items, finalWord) {
     var output = '';
     for (var i = 0; i < items.length; i++) {
         if (items[i] == 'Close') items[i] = 'Nearly';
+        else if (items[i] == 'Right') items[i] = 'Yes';
+        else if (items[i] == 'Wrong') items[i] = 'No';
+        // else if (items[i] == 'Close') items[i] = 'Nearly';
         if(i === 0) {
             output += items[i];
         } else if (i < items.length - 1) {
