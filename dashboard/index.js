@@ -27,7 +27,6 @@ var findDocuments = function(db, callback) {
   // Find some documents
   collection.find({}).limit(0).toArray(function(err, docs) {
     assert.equal(err, null);
-    console.log("No. records:", docs.length);
     // console.log(docs)
     callback(docs);
   });
@@ -58,7 +57,7 @@ function getStats(docs) {
 
 	console.log(topWords);
 
-	console.log(quickest, win, lose, end, docs.length);
+	console.log("Fastest: " + quickest, "Wins: " + win, "Loses: " + lose, "Failed: " + end, "No. records: " + docs.length);
 
 
 		// getUniqueUsers(docs);
