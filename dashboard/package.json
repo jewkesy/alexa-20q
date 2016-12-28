@@ -1,0 +1,15 @@
+{
+  "name": "alexa-20q-dashboard",
+  "version": "0.0.1",
+  "description": "Dashboard for Alexa-20q stats",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daryl Jewkes",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^2.2.16",
+    "tracer": "^0.8.7"
+  }
+}
