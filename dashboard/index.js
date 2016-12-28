@@ -58,47 +58,6 @@ function getStats(docs) {
 	console.log(topWords);
 
 	console.log("Fastest: " + quickest, "Wins: " + win, "Loses: " + lose, "Failed: " + end, "No. records: " + docs.length);
-
-
-		// getUniqueUsers(docs);
-		// getWinLoseStats(docs);
-		// getTopTenWords(docs)
-}
-
-function getUniqueUsers(docs) {
-	var users = [];
-	for (var i = 0; i < docs.length; i++) {
-		upsertArray(docs[i].userId, users);
-	}
-	users.sort(sortByCount);
-
-	var topUsers = users.slice(0, 10);
-	console.log(topUsers);
-}
-
-function getWinLoseStats(docs) {
-	// get quickest win num
-	var quickest = 30;
-	var win = 0;
-	var lose = 0;
-	var end = 0;
-	for (var i = 0; i < docs.length; i++) {
-		if (docs[i].num < quickest) quickest = docs[i].num;
-		if (docs[i].num == 30) end++;
-		if (docs[i].win) win++; else lose++;
-	}
-	console.log(quickest, win, lose, end, docs.length);
-}
-
-function getTopTenWords(docs) {
-	var words = [];
-	for (var i = 0; i < docs.length; i++) {
-		upsertArray(docs[i].word, words);
-	}
-	words.sort(sortByCount);
-
-	var topWords = words.slice(0, 10);
-	console.log(topWords);
 }
 
 function sortByCount(a,b) {
