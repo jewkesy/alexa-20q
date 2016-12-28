@@ -14,10 +14,9 @@ MongoClient.connect(url, function(err, db) {
   console.log("Connected successfully to server");
 
 	findDocuments(db, function(docs) {
-		console.log(docs[0]);
-		getUniqueUsers(docs);
-		getWinLoseStats(docs);
-		getTopTenWords(docs)
+		// console.log(docs[0]);
+		getStats(docs);
+
 		db.close();
 	});
 });
@@ -32,6 +31,39 @@ var findDocuments = function(db, callback) {
     // console.log(docs)
     callback(docs);
   });
+}
+
+function getStats(docs) {
+
+	var users = [];
+	var words = [];
+	var quickest = 30;
+	var win = 0;
+	var lose = 0;
+	var end = 0;
+
+	for (var i = 0; i < docs.length; i++) {
+		upsertArray(docs[i].userId, users);
+		upsertArray(docs[i].word, words);
+		if (docs[i].num < quickest) quickest = docs[i].num;
+		if (docs[i].num == 30) end++;
+		if (docs[i].win) win++; else lose++;
+	}
+	users.sort(sortByCount);
+	var topUsers = users.slice(0, 10);
+	console.log(topUsers);
+
+	words.sort(sortByCount);	
+	var topWords = words.slice(0, 10);
+
+	console.log(topWords);
+
+	console.log(quickest, win, lose, end, docs.length);
+
+
+		// getUniqueUsers(docs);
+		// getWinLoseStats(docs);
+		// getTopTenWords(docs)
 }
 
 function getUniqueUsers(docs) {
