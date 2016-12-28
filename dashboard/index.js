@@ -6,6 +6,7 @@ var MongoClient = require('mongodb').MongoClient
 
 // Connection URL
 var url = process.argv[2];
+var dbCollection = process.argv[3];
 
 // Use connect method to connect to the server
 MongoClient.connect(url, function(err, db) {
@@ -13,9 +14,9 @@ MongoClient.connect(url, function(err, db) {
   console.log("Connected successfully to server");
 
 	findDocuments(db, function(docs) {
+		console.log(docs[0]);
 		getUniqueUsers(docs);
-		getWinStats(docs);
-		getLoseStats(docs);
+		getWinLoseStats(docs);
 		getTopTenWords(docs)
 		db.close();
 	});
@@ -23,9 +24,9 @@ MongoClient.connect(url, function(err, db) {
 
 var findDocuments = function(db, callback) {
   // Get the documents collection
-  var collection = db.collection('stats');
+  var collection = db.collection(dbCollection);
   // Find some documents
-  collection.find({}).toArray(function(err, docs) {
+  collection.find({}).limit(0).toArray(function(err, docs) {
     assert.equal(err, null);
     console.log("No. records:", docs.length);
     // console.log(docs)
@@ -34,17 +35,61 @@ var findDocuments = function(db, callback) {
 }
 
 function getUniqueUsers(docs) {
-	console.log(docs.length)
+	var users = [];
+	for (var i = 0; i < docs.length; i++) {
+		upsertArray(docs[i].userId, users);
+	}
+	users.sort(sortByCount);
+
+	var topUsers = users.slice(0, 10);
+	console.log(topUsers);
 }
 
-function getWinStats(docs) {
-	console.log(docs.length)
-}
-
-function getLoseStats(docs) {
-	console.log(docs.length)
+function getWinLoseStats(docs) {
+	// get quickest win num
+	var quickest = 30;
+	var win = 0;
+	var lose = 0;
+	var end = 0;
+	for (var i = 0; i < docs.length; i++) {
+		if (docs[i].num < quickest) quickest = docs[i].num;
+		if (docs[i].num == 30) end++;
+		if (docs[i].win) win++; else lose++;
+	}
+	console.log(quickest, win, lose, end, docs.length);
 }
 
 function getTopTenWords(docs) {
-	console.log(docs.length)
+	var words = [];
+	for (var i = 0; i < docs.length; i++) {
+		upsertArray(docs[i].word, words);
+	}
+	words.sort(sortByCount);
+
+	var topWords = words.slice(0, 10);
+	console.log(topWords);
+}
+
+function sortByCount(a,b) {
+  if (a.count < b.count)
+    return 1;
+  if (a.count > b.count)
+    return -1;
+  return 0;
+}
+
+function upsertArray(key, array) {
+  var position = keyExists(key, array) 
+  if (position > -1) {
+    array[position].count++;
+  } else {
+    array.push({key: key, count: 1});
+  }
+}
+
+function keyExists(name, arr) {
+  for(var i = 0, len = arr.length; i < len; i++) {
+    if( arr[ i ].key === name ) return i;
+  }
+  return -1;
 }

@@ -4,5 +4,5 @@ A dashboard app that processes the stats recorded for my Twenty Questions Alexa 
 
 `
 $ npm install --production
-$ node index.js <mongodbURI>
+$ node index.js mongodb://<mongodbUsername>:<mongodbPassword>@<mongodbURI>
 `
