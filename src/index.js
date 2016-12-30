@@ -12,9 +12,10 @@ var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
-const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy", "Ha ha", "Loser", "MHahaha"];
-const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo"];
+const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy", "Ha ha", "Loser", "Tee hee", "Here is a slow clap for your efforts. Clap. Clap", "That was difficult. Not"];
+const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo", "Nice one"];
 const startgamephrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this'];
+const farewellphrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community.", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community.", "Please visit www.daryljewkes.com to see my win vs lose ratio."];
 
 exports.handler = function (event, context) {
     try {
@@ -308,6 +309,8 @@ function askNextQuestion(uri, answer, session, callback) {
         if($('h2').length > 0) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
+
+            sessionAttributes.history += '\nThank you for playing. ' + farewellphrases[randomInt(0, farewellphrases.length)];
             // console.log(sessionAttributes.questionText);
             var guess = getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
@@ -468,31 +471,16 @@ function writeToMongo(userId, word, num, type, win, callback) {
         if (err) {
             console.log('mongodb save err', err);
             return callback(err);
-          }
-        // console.log('Saved to mongo', result)
+        }
 
         db.close();
         return callback(null, result);
 
-        // collection.find({}).toArray(function(err, docs) {
-        //     if (err) {
-        //         console.log('mongodb save err', err);
-        //         return callback(err);
-        //       }
-
-        //     // console.log(docs)
-        //     db.close();
-        //     return callback(null, docs)
-        // });
       });
     });
 }
 
 function getGuessText(guessText) {
-    // Question 17.  I am guessing that it is a panther?
-    // Question 17.  I am guessing that it is marble (the rock)
-    // Question 17.  I am guessing that it is an ant eater?
-    // Question 30.  I am guessing that it is an armadillo?
 
     var retVal = guessText.split("I am guessing that it is ")[1];
 
