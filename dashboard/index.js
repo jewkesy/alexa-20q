@@ -13,6 +13,8 @@ MongoClient.connect(url, function(err, db) {
   assert.equal(null, err);
   console.log("Connected successfully to server");
 
+  // indexCollection(db, function() { db.close(); });
+
 	findDocuments(db, function(docs) {
 		// console.log(docs[0]);
 		getStats(docs);
@@ -32,6 +34,17 @@ var findDocuments = function(db, callback) {
   });
 }
 
+var indexCollection = function(db, callback) {
+  db.collection(dbCollection).createIndex(
+    { "timestamp": 1 },
+      null,
+      function(err, results) {
+        console.log(results);
+        callback();
+    }
+  );
+};
+
 function getStats(docs) {
 
 	var users = [];
@@ -50,7 +63,7 @@ function getStats(docs) {
 	}
 	users.sort(sortByCount);
 	var topUsers = users.slice(0, 10);
-	console.log(topUsers);
+	console.log(users.length, topUsers);
 
 	words.sort(sortByCount);	
 	var topWords = words.slice(0, 10);
