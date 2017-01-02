@@ -3,39 +3,61 @@ var console = require('tracer').colorConsole();
 var MongoClient = require('mongodb').MongoClient
   , assert = require('assert');
 
-
 // Connection URL
-var url = process.argv[2];
-var dbCollection = process.argv[3];
+var url = process.argv[2];  // process.env.mongoURI;
+var QCollection = process.argv[3];      // stats
+var StatsCollection = process.argv[4];  // summary
 
-// Use connect method to connect to the server
-MongoClient.connect(url, function(err, db) {
-  assert.equal(null, err);
-  console.log("Connected successfully to server");
 
-  // indexCollection(db, function() { db.close(); });
+exports.handler = function (event, context) {
 
-	findDocuments(db, function(docs) {
-		// console.log(docs[0]);
-		getStats(docs);
+  // Use connect method to connect to the server
+  MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    console.log("Connected successfully to server");
 
-		db.close();
-	});
-});
+    // indexCollection(db, function() { db.close(); });
+
+  	findDocuments(db, function(docs) {
+  		// console.log(docs[0]);
+  		// getStats(docs);
+      var summary = processResults(docs);
+      console.log(summary);
+
+      updateDocument(db, summary, function (result) {
+        // console.log(result);
+        db.close();
+      });
+  	});
+  });
+}
 
 var findDocuments = function(db, callback) {
   // Get the documents collection
-  var collection = db.collection(dbCollection);
+  var collection = db.collection(QCollection);
   // Find some documents
   collection.find({}).limit(0).toArray(function(err, docs) {
     assert.equal(err, null);
     // console.log(docs)
     callback(docs);
   });
-}
+};
+
+var updateDocument = function(db, newDoc, callback) {
+  // Get the documents collection
+  var collection = db.collection(StatsCollection);
+  // Update document where a is 2, set b equal to 1
+
+  collection.update({ gameCollection : 'stats' }, newDoc, {upsert: true, multi: false} , function(err, result) {
+    assert.equal(err, null);
+    assert.equal(1, result.result.n);
+    console.log("Updated the document");
+    callback(result);
+  });  
+};
 
 var indexCollection = function(db, callback) {
-  db.collection(dbCollection).createIndex(
+  db.collection(QCollection).createIndex(
     { "timestamp": 1 },
       null,
       function(err, results) {
@@ -45,32 +67,78 @@ var indexCollection = function(db, callback) {
   );
 };
 
-function getStats(docs) {
+function processResults(docs) {
+  var users = [];
+  var words = [];
+  var quickest = 30;
+  var quickestObj = "";
+  var win = 0;
+  var lose = 0;
+  var end = 0;
 
-	var users = [];
-	var words = [];
-	var quickest = 30;
-	var win = 0;
-	var lose = 0;
-	var end = 0;
+  var startDate = new Date(docs[0].timestamp);
+  var endDate = new Date(docs[docs.length-1].timestamp);
 
-	for (var i = 0; i < docs.length; i++) {
-		upsertArray(docs[i].userId, users);
-		upsertArray(docs[i].word, words);
-		if (docs[i].num < quickest) quickest = docs[i].num;
-		if (docs[i].num == 30) end++;
-		if (docs[i].win) win++; else lose++;
-	}
-	users.sort(sortByCount);
-	var topUsers = users.slice(0, 10);
-	console.log(users.length, topUsers);
+  var hours = Math.abs(startDate - endDate) / 36e5;
+  var gPerHr = Math.ceil(docs.length/Math.ceil(hours));
+  // console.log(startDate, endDate, Math.ceil(hours), gPerHr);
 
-	words.sort(sortByCount);	
-	var topWords = words.slice(0, 10);
+  for (var i = 0; i < docs.length; i++) {
+    upsertArray(docs[i].userId, users);
+    upsertArray(docs[i].word, words);
+    if (docs[i].num < quickest) {
+      quickest = docs[i].num;
+      quickestObj = docs[i].word;
+    }
+    if (docs[i].num == 30) {
+      if (docs[i].win) {
+        // console.log('check me')
+        lose++;
+      } else {
+        // console.log('check me too')
+        end++;
+      }
+    }
+    if (docs[i].win) win++; else lose++;
+  }
 
-	console.log(topWords);
+  users.sort(sortByCount);
+  var topUsers = users.slice(0, 10);
+  // console.log(users.length, topUsers);
 
-	console.log("Fastest: " + quickest, "Wins: " + win, "Loses: " + lose, "Failed: " + end, "No. records: " + docs.length);
+  words.sort(sortByCount);  
+  var topWords = words.slice(0, 10);
+
+  // console.log(topWords);
+  var returningUserCount = 0;
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].count == 2) {
+      returningUserCount = i+1;
+      break;
+    }
+  }
+
+  for (var i = 0; i < topUsers.length; i++) {
+    topUsers[i].key = i+1;
+  }
+
+  return {
+    dateTime: new Date(),
+    gameCollection: 'stats',
+    returningUserCount: returningUserCount,
+    topUsers: topUsers,
+    totalUsers: users.length,
+    topWords: topWords,
+    quickest: quickest,
+    quickestObj: quickestObj,
+    wins: win,
+    loses: lose,
+    failed: end,
+    totalGames: docs.length,
+    avgGameHr: gPerHr,
+    startTime: docs[0].datetime,
+    lastGame: docs[docs.length-1]
+  }
 }
 
 function sortByCount(a,b) {
