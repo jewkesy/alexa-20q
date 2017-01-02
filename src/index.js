@@ -14,7 +14,7 @@ var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
 const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy", "Ha ha", "Loser", "Tee hee", "Here is a slow clap for your efforts. Clap. Clap", "That was difficult. Not"];
 const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo", "Nice one", "If I had hands, I'd clap"];
-const startgamephrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this', '20 Questions? My fastest is 9'];
+const startgamephrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this', '20 Questions? My fastest is 8'];
 const farewellphrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community.", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community.", "Please visit www.daryljewkes.com to see my win vs lose ratio."];
 
 exports.handler = function (event, context) {
