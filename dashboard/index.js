@@ -22,7 +22,7 @@ exports.handler = function (event, context) {
   		// console.log(docs[0]);
   		// getStats(docs);
       var summary = processResults(docs);
-      console.log(summary);
+      // console.log(summary);
 
       updateDocument(db, summary, function (result) {
         // console.log(result);
@@ -51,7 +51,7 @@ var updateDocument = function(db, newDoc, callback) {
   collection.update({ gameCollection : 'stats' }, newDoc, {upsert: true, multi: false} , function(err, result) {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
-    console.log("Updated the document");
+    console.log("Updated the document", newDoc);
     callback(result);
   });  
 };
