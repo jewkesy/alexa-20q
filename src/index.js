@@ -12,10 +12,7 @@ var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
 
-const winOpts  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy", "Ha ha", "Loser", "Tee hee", "Here is a slow clap for your efforts. Clap. Clap", "That was difficult. Not"];
-const loseOpts = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo", "Nice one", "If I had hands, I'd clap"];
-const startgamephrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this', '20 Questions? My fastest is 8', 'Prepare to lose'];
-const farewellphrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community.", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community.", "Please visit www.daryljewkes.com to see my win vs lose ratio."];
+var helpers = require('helpers.js');
 
 exports.handler = function (event, context) {
     try {
@@ -172,7 +169,7 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
 
     if (typeof cardType == 'undefined') cardType = "Simple";  // Standard
     if (typeof cardText == 'undefined') cardText = output;
-    output = handleSpeechQuerks(output);
+    output = helpers.handleSpeechQuerks(output);
     return {
         outputSpeech: {
             type: "SSML", //PlainText or SSML
@@ -192,18 +189,6 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession, c
         },
         shouldEndSession: shouldEndSession
     };
-}
-
-function handleSpeechQuerks(speech) {
-    if (speech.indexOf("Does it growl?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Does it roll?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Does it have four legs?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Is it round?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Can you lift it?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Can it help you find your way?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Does it cry?") > -1) return speech.substring(0, speech.length - 1);
-    else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
-    return speech;
 }
 
 function buildResponse(sessionAttributes, speechletResponse) {
@@ -237,7 +222,7 @@ function invalidAnswer(intent, session, callback) {
     // console.log(intent);
     var sessionAttributes = session.attributes;
     sessionAttributes.intent = intent;
-    var optionlist = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+    var optionlist = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
    
     // repeattext = "<p>You can say " + optionlist + "</p>";
     var questiontext = "Sorry, that was not a valid answer.\n";
@@ -256,7 +241,7 @@ function processGameHelp(firstQuestion, session, callback) {
     sessionAttributes.intent = 'HelpIntent';
     var text = "Think of an object and I will try to guess what it is within twenty questions.\n";
 
-    var opts = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+    var opts = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
 
     if (firstQuestion) {
         text += "Is it an " + opts;
@@ -313,18 +298,20 @@ function askNextQuestion(uri, answer, session, callback) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
 
-            sessionAttributes.history += '\nThank you for playing. ' + farewellphrases[randomInt(0, farewellphrases.length)];
+            sessionAttributes.history += '\nThank you for playing. ' + helpers.getFarewellPhrase();
             // console.log(sessionAttributes.questionText);
-            var guess = getGuessText(sessionAttributes.questionText);
+            var guess = helpers.getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
                 console.log('20Q won: ', guess, session.user.userId);
                 writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
-                    return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + winOpts[randomInt(0, winOpts.length)],   "", true, sessionAttributes.history));
+                    // console.log(results);
+                    return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + helpers.getWinPhrase(),   "", true, sessionAttributes.history));
                  });
             } else {
                 console.log('20Q lost: ', guess, session.user.userId);
                 writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
-                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + loseOpts[randomInt(0, loseOpts.length)], "", true, sessionAttributes.history));
+                    // console.log(results);
+                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLosePhrases(), "", true, sessionAttributes.history));
                 });
             }
         } else {
@@ -356,7 +343,7 @@ function askNextQuestion(uri, answer, session, callback) {
 
             question = question.replace('Q', 'Question ');
             sessionAttributes.questionType = 'question';
-            sessionAttributes.questionNum = getQuestionNo(question);
+            sessionAttributes.questionNum = helpers.getQuestionNo(question);
             sessionAttributes.questionText = question;
             
             callback(sessionAttributes,
@@ -364,16 +351,6 @@ function askNextQuestion(uri, answer, session, callback) {
                     question + "\nIf you are unsure, you can say 'I don't know.'",  false));
         }
     });
-}
-
-function getQuestionNo(text) {
-    // console.log(text)
-    //Question 17. Does it have a long tail?
-    //Question 2.  Does it have claws?
-    text = text.replace("Question ", "");
-    var retVal = text.substring(0,  text.indexOf("."));
-    // console.log(retVal)
-    return retVal;
 }
 
 /** 
@@ -427,8 +404,8 @@ function startGame(callback) {
                 sessionAttributes.options[optionname] = optionURI;
             }
 
-            var listtext = buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-            var intro = startgamephrases[randomInt(0, startgamephrases.length)] + ". ";
+            var listtext = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
+            var intro = helpers.getStartGamePhrase();
 
             sessionAttributes.questionType = 'first';
             sessionAttributes.questionNum = 1;
@@ -442,66 +419,41 @@ function startGame(callback) {
     });
 }
 
-function buildNaturalLangList(items, finalWord) {
-    var output = '';
-    for (var i = 0; i < items.length; i++) {
-        if (items[i] == 'Close') items[i] = 'Nearly';
-        else if (items[i] == 'Right') items[i] = 'Yes';
-        else if (items[i] == 'Wrong') items[i] = 'No';
-        // else if (items[i] == 'Close') items[i] = 'Nearly';
-        if(i === 0) {
-            output += items[i];
-        } else if (i < items.length - 1) {
-            output += ', ' + items[i];
-        } else {
-            output += ', ' + finalWord + ' ' + items[i];
-        }
-    }
-
-    return output;
-}
-
 function writeToMongo(userId, word, num, type, win, callback) {
     if (SAVE_TO_DB == 'false') return callback(null, {});
 
     MongoClient.connect(MONGODB_URI, function(err, db) {
-      if (err) {
-        console.log('mongodb conn err', err);
-        return callback(err);
-      }
-      // console.log("Connected correctly to server");
-      
-      var collection = db.collection('stats');
-      collection.insertOne({
-        'userId': userId,
-        'word': word,
-        'num': num,
-        'win': win,
-        'type': type,
-        'timestamp': +new Date,
-        'datetime': new Date().toLocaleString()
-        }, function(err, result) {
         if (err) {
-            console.log('mongodb save err', err);
+            console.log('mongodb conn err', err);
             return callback(err);
         }
+        // console.log("Connected correctly to server");
 
-        db.close();
-        return callback(null, result);
+        var collection = db.collection('stats');
+        collection.insertOne({
+            'userId': userId,
+            'word': word,
+            'num': num,
+            'win': win,
+            'type': type,
+            'timestamp': +new Date,
+            'datetime': new Date().toLocaleString()}, function(err, result) {
+                if (err) {
+                    console.log('mongodb save err', err);
+                    db.close();
+                    return callback(err);
+                }
+                var summary = db.collection('summary');
+                summary.findOne({}, function (err, item) {
+                    db.close();
+                    if (err) {
+                        console.log('mongodb find err', err);
+                        return callback(err);
+                    }
 
-      });
+                    // console.log(item)
+                    return callback(null, item);
+                });
+        });
     });
-}
-
-function getGuessText(guessText) {
-
-    var retVal = guessText.split("I am guessing that it is ")[1];
-
-    if (retVal.slice(-1) == '?') retVal = retVal.substring(0, retVal.length - 1);
-
-    return retVal;
-}
-
-function randomInt(low, high) {
-    return Math.floor(Math.random() * high);
 }

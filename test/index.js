@@ -1,7 +1,7 @@
 "use strict";
 
 var assert = require('chai').assert;
-//var utils = require('./src/utils.js');
+var helpers = require('./src/helpers.js');
 var console = require('tracer').colorConsole();
 
 xdescribe("", function () {
