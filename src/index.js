@@ -311,7 +311,7 @@ function askNextQuestion(uri, answer, session, callback) {
                 console.log('20Q lost: ', guess, session.user.userId);
                 writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
                     // console.log(results);
-                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLosePhrases(), "", true, sessionAttributes.history));
+                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLostPhrase(), "", true, sessionAttributes.history));
                 });
             }
         } else {
