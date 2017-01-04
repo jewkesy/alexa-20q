@@ -1,0 +1,15 @@
+{
+  "name": "alexa-20q-test",
+  "version": "0.0.1",
+  "description": "Test for Alexa-20q",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daryl Jewkes",
+  "license": "MIT",
+  "dependencies": {
+    "chai": "^3.5.0",
+    "tracer": "^0.8.7"
+  }
+}

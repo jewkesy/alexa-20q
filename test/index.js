@@ -1,3 +1,25 @@
+"use strict";
+
+var assert = require('chai').assert;
+//var utils = require('./src/utils.js');
+var console = require('tracer').colorConsole();
+
+xdescribe("", function () {
+    describe("", function () {
+        describe("", function () {
+
+            it("", function () {
+                var retVal = utils.functionName(null, null);
+                assert.equal(retVal, "");
+            });
+
+        });
+        describe("", function () {
+
+        });
+    });
+});
+
 function getGuessText(guessText) {
     // Question 17.  I am guessing that it is a panther?
     // Question 17.  I am guessing that it is marble (the rock)
@@ -12,8 +34,6 @@ function getGuessText(guessText) {
     return retVal;
 }
 
-
-
 function getQuestionNo(text) {
     // console.log(text)
     //Question 17. Does it have a long tail?
@@ -24,15 +44,12 @@ function getQuestionNo(text) {
     return retVal;
 }
 
-
 console.log(getGuessText("Question 1.  I am guessing that it is a panther?"), getQuestionNo("Question 1.  I am guessing that it is a panther?"));
 console.log(getGuessText("Question 17.  I am guessing that it is a panther?"), getQuestionNo("Question 17.  I am guessing that it is a panther?"));
 console.log(getGuessText("Question 17.  I am guessing that it is marble (the rock)"), getQuestionNo("Question 17.  I am guessing that it is marble (the rock)?"));
 console.log(getGuessText("Question 17.  I am guessing that it is an ant eater?"), getQuestionNo("Question 17.  I am guessing that it is an ant eater?"));
 console.log(getGuessText("Question 30.  I am guessing that it is an armadillo?"), getQuestionNo("Question 30.  I am guessing that it is an armadillo?"));
 // console.log(getGuessText(""));
-
-
 
 function handleSpeechQuerks(speech) {
     if (speech.indexOf("Does it growl?") > -1) return speech.substring(0, speech.length - 1);
