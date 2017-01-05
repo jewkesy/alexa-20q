@@ -5,7 +5,7 @@ var console = require('tracer').colorConsole();
 const winPhrases  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice", "Better luck next time", "Must try harder", "Easy peasy", "Too easy", "Ha ha", "Loser", "Tee hee", "Here is a slow clap for your efforts. Clap. Clap", "That was difficult. Not"];
 const losePhrases = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo", "Nice one", "If I had hands, I'd clap"];
 const startGamePhrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this', '20 Questions? My fastest is 8', 'Prepare to lose'];
-const farewellPhrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community.", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community.", "Please visit www.daryljewkes.com to see my win vs lose ratio."];
+const farewellPhrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community", "Please visit www.daryljewkes.com to see my win vs lose ratio"];
 
 module.exports = {
 	getStartGamePhrase: function () {
@@ -42,15 +42,15 @@ function getStartGamePhrase() {
 }
 
 function getFarewellPhrase() {
-	return farewellPhrases[randomInt(0, farewellPhrases.length)];
+	return farewellPhrases[randomInt(0, farewellPhrases.length)] + ". ";
 }
 
 function getWinPhrase() {
-	return winPhrases[randomInt(0, winPhrases.length)];
+	return winPhrases[randomInt(0, winPhrases.length)] + ". ";
 }
 
 function getLostPhrase() {
-	return losePhrases[randomInt(0, losePhrases.length)];
+	return losePhrases[randomInt(0, losePhrases.length)] + ". ";
 }
 
 function handleSpeechQuerks(speech) {
