@@ -37,7 +37,6 @@ const questions = [
     "Question 20.  I am guessing that it is a panther?"
 ];
 
-
 describe("src/helpers.js", function () {
     describe("get phrases", function () {
         describe("getStartGamePhrase: function () {}", function () {
@@ -83,11 +82,11 @@ describe("src/helpers.js", function () {
                 assert.equal(retVal, ". ");
             });
         });
-
     });
     
-    xdescribe("buildNaturalLangList: function (items, finalWord) {}", function () {
-        it("", function () {});
+    describe("buildNaturalLangList: function (items, finalWord) {}", function () {
+        it("that 'or' precedes the penultimate word", function () {});
+        it("that words are comma separated, apart from the last word", function () {});
     });
 
     describe("handleSpeechQuerks: function (speech) {}", function () {
@@ -99,7 +98,8 @@ describe("src/helpers.js", function () {
     });
 
     describe("getGuessText: function (guessText) {}", function () {
-        it("", function () {});
+        it("returns the guess object if making a guess", function () {});
+        it("returns empty if not making a guess", function () {});
     });
 
     xdescribe("randomInt: function (low, high) {}", function () {

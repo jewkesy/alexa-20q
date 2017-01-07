@@ -1,26 +1,27 @@
 "use strict";
 var console = require('tracer').colorConsole();
-var MongoClient = require('mongodb').MongoClient
-  , assert = require('assert');
+var MongoClient = require('mongodb').MongoClient, assert = require('assert');
 
 // Connection URL
 var url = process.argv[2];  // process.env.mongoURI;
-var QCollection = process.argv[3];      // stats
-var StatsCollection = process.argv[4];  // summary
-
+var QCollection = process.argv[3];      // "stats";
+var StatsCollection = process.argv[4];  // "summary";
 
 exports.handler = function (event, context) {
-
-  // Use connect method to connect to the server
+  init();
+};
+init();
+function init() {
+    // Use connect method to connect to the server
   MongoClient.connect(url, function(err, db) {
     assert.equal(null, err);
     console.log("Connected successfully to server");
 
     // indexCollection(db, function() { db.close(); });
 
-  	findDocuments(db, function(docs) {
-  		// console.log(docs[0]);
-  		// getStats(docs);
+    findDocuments(db, function(docs) {
+      // console.log(docs[0]);
+      // getStats(docs);
       var summary = processResults(docs);
       // console.log(summary);
 
@@ -28,7 +29,7 @@ exports.handler = function (event, context) {
         // console.log(result);
         db.close();
       });
-  	});
+    });
   });
 }
 
@@ -36,7 +37,7 @@ var findDocuments = function(db, callback) {
   // Get the documents collection
   var collection = db.collection(QCollection);
   // Find some documents
-  collection.find({}).limit(0).toArray(function(err, docs) {
+  collection.find({}, {_id:0, datetime:0}).limit(0).toArray(function(err, docs) {
     assert.equal(err, null);
     // console.log(docs)
     callback(docs);
@@ -70,11 +71,17 @@ var indexCollection = function(db, callback) {
 function processResults(docs) {
   var users = [];
   var words = [];
+  var cats = [];
+
   var quickest = 30;
   var quickestObj = "";
   var win = 0;
   var lose = 0;
   var end = 0;
+  var currHour = 0;
+
+  var nowDate = +new Date;
+  var ONE_HOUR = 60 * 60 * 1000;
 
   var startDate = new Date(docs[0].timestamp);
   var endDate = new Date(docs[docs.length-1].timestamp);
@@ -86,6 +93,10 @@ function processResults(docs) {
   for (var i = 0; i < docs.length; i++) {
     upsertArray(docs[i].userId, users);
     upsertArray(docs[i].word, words);
+    upsertArray(docs[i].type, cats)
+
+    if ((nowDate - docs[i].timestamp) < ONE_HOUR) currHour++;
+
     if (docs[i].num < quickest) {
       quickest = docs[i].num;
       quickestObj = docs[i].word;
@@ -109,6 +120,8 @@ function processResults(docs) {
   words.sort(sortByCount);  
   var topWords = words.slice(0, 10);
 
+  cats.sort(sortByCount);
+
   // console.log(topWords);
   var returningUserCount = 0;
   for (var i = 0; i < users.length; i++) {
@@ -129,6 +142,7 @@ function processResults(docs) {
     topUsers: topUsers,
     totalUsers: users.length,
     topWords: topWords,
+    categories: cats,
     quickest: quickest,
     quickestObj: quickestObj,
     wins: win,
@@ -136,7 +150,8 @@ function processResults(docs) {
     failed: end,
     totalGames: docs.length,
     avgGameHr: gPerHr,
-    startTime: docs[0].datetime,
+    currHour: currHour,
+    startTime: "Tue Dec 27 2016 22:38:20 GMT+0000 (UTC)", // docs[0].datetime,
     lastGame: docs[docs.length-1]
   }
 }
