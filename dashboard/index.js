@@ -10,34 +10,52 @@ var StatsCollection = process.argv[4];  // "summary";
 exports.handler = function (event, context) {
   init();
 };
+
 init();
+
 function init() {
     // Use connect method to connect to the server
   MongoClient.connect(url, function(err, db) {
     assert.equal(null, err);
     console.log("Connected successfully to server");
 
-    // indexCollection(db, function() { db.close(); });
+    findDocuments(db, StatsCollection, {}, {}, {}, function(docs) {
+      var currSummary;
+      var filter = {};
+      
+      if (docs.length > 0) {
+        if (typeof docs[0].last_id == 'undefined') filter = {};
+        else filter = {_id: {$gt: docs[0].last_id}};
+        currSummary = docs[0]
+      }
 
-    findDocuments(db, function(docs) {
-      // console.log(docs[0]);
-      // getStats(docs);
-      var summary = processResults(docs);
-      // console.log(summary);
+      findDocuments(db, QCollection, filter, {datetime: 0}, {}, function(docs) {
+        if (docs.length == 0) { console.log("no docs, returning"); db.close(); return;}
+        // console.log(docs.length, docs[0]);
+        // getStats(docs);
+        var summary = processResults(docs);
+        console.log("merge this: ", currSummary, "to this: ", summary);
+        var newSum = mergeSummaries(currSummary, summary);
 
-      updateDocument(db, summary, function (result) {
-        // console.log(result);
-        db.close();
+        updateDocument(db, newSum, function (result) {
+          // console.log(result);
+          db.close();
+        });
       });
     });
   });
 }
 
-var findDocuments = function(db, callback) {
+function mergeSummaries(currSum, newSum) {
+  return newSum;
+}
+
+
+var findDocuments = function(db, coll, filter, proj, sort, callback) {
   // Get the documents collection
-  var collection = db.collection(QCollection);
+  var collection = db.collection(coll);
   // Find some documents
-  collection.find({}, {_id:0, datetime:0}).limit(0).toArray(function(err, docs) {
+  collection.find(filter, proj, sort).limit(0).toArray(function(err, docs) {
     assert.equal(err, null);
     // console.log(docs)
     callback(docs);
@@ -151,6 +169,7 @@ function processResults(docs) {
     totalGames: docs.length,
     avgGameHr: gPerHr,
     currHour: currHour,
+    last_id: docs[docs.length-1]._id,
     startTime: "Tue Dec 27 2016 22:38:20 GMT+0000 (UTC)", // docs[0].datetime,
     lastGame: docs[docs.length-1]
   }
