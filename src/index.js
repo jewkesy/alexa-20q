@@ -298,20 +298,24 @@ function askNextQuestion(uri, answer, session, callback) {
             // There is only an h2 element on the game over screen.
             sessionAttributes.history += answer;
 
-            sessionAttributes.history += '\nThank you for playing. ' + helpers.getFarewellPhrase();
+            sessionAttributes.history += '\nThank you for playing. ' + helpers.getFarewellPhrase() + '\n';
+
+            var ending = "Please check your Alexa App for your game summary.  Goodbye."
             // console.log(sessionAttributes.questionText);
             var guess = helpers.getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
                 console.log('20Q won: ', guess, session.user.userId);
                 writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
                     // console.log(results);
-                    return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + helpers.getWinPhrase(),   "", true, sessionAttributes.history));
+                    sessionAttributes.history += helpers.getRandomFact(results);
+                    return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + helpers.getWinPhrase() + ending, "", true, sessionAttributes.history));
                  });
             } else {
                 console.log('20Q lost: ', guess, session.user.userId);
                 writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
                     // console.log(results);
-                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLostPhrase(), "", true, sessionAttributes.history));
+                    sessionAttributes.history += helpers.getRandomFact(results);
+                    return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLostPhrase() + ending, "", true, sessionAttributes.history));
                 });
             }
         } else {

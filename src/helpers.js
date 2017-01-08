@@ -32,6 +32,10 @@ module.exports = {
 	getGuessText: function (guessText) {
 		return getGuessText(guessText);
 	},
+    getRandomFact: function (summary) {
+        return getRandomFact(summary);
+
+    },
 	randomInt: function (low, high) {
 		return randomInt(low, high);
 	}
@@ -62,6 +66,7 @@ function handleSpeechQuerks(speech) {
     else if (speech.indexOf("Can it help you find your way?") > -1) return speech.substring(0, speech.length - 1);
     else if (speech.indexOf("Does it cry?") > -1) return speech.substring(0, speech.length - 1);
     else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
+    else if (speech.indexOf("Is is tall?") > -1) return speech.substring(0, speech.length - 1);
     return speech;
 }
 
@@ -93,6 +98,35 @@ function buildNaturalLangList(items, finalWord) {
     return output;
 }
 
+function getRandomFact(summary) {
+
+    var facts = [
+        // avgGameHr
+        "Since this Skill launched, the Alexa community are currently playing an average of " + summary.avgGameHr + " games every hour!",
+
+        "Since this Skill launched, the Alexa community are currently playing an average of " +  numberWithCommas(summary.avgGameHr*24) + " games every day!",
+        // categories
+        "The categories chosen by the Alexa community is popularity order are " + summary.categories[0].key + ", " + summary.categories[1].key + ", " + summary.categories[2].key + ", " + summary.categories[3].key + " and finally " + summary.categories[4].key + "!" ,
+
+        // failed
+        // loses
+        // quickest
+        // quickestObj
+        "My fastest correct guess was for " + summary.quickestObj + " in only " + summary.quickest + " questions!",
+        // topWords
+        "The top 5 objects picked by the Alexa community are " + summary.topWords[0].key + ", " + summary.topWords[1].key + ", " + summary.topWords[2].key + ", " + summary.topWords[3].key + " and " + summary.topWords[4].key +  "!",
+
+        // totalGames
+        "Since this Skill launched, the Alexa community have played " + numberWithCommas(summary.totalGames) + " games",
+        // wins
+        "Since this Skill launched, Alexa has guessed " + Math.floor(((summary.wins + (summary.loses)-summary.failed) / summary.totalGames) * 100) + '% of objects correctly - though not all in 20 questions or less.'
+    ];
+
+    var retVal =  facts[randomInt(0, facts.length )];
+    console.log(retVal)
+    return retVal
+}
+
 function getGuessText(guessText) {
 
     var retVal = guessText.split("I am guessing that it is ")[1];
@@ -104,4 +138,8 @@ function getGuessText(guessText) {
 
 function randomInt(low, high) {
     return Math.floor(Math.random() * high);
+}
+
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }

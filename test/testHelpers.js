@@ -12,6 +12,7 @@ var console = require('tracer').colorConsole();
 // handleSpeechQuerks: function (speech) {}
 // getQuestionNo: function (text) {}
 // getGuessText: function (guessText) {}
+// getRandomFact: function (summary) {}
 // randomInt: function (low, high) {}
 
 const questions = [
@@ -36,6 +37,42 @@ const questions = [
     "Question 19.  Does it like to play?",
     "Question 20.  I am guessing that it is a panther?"
 ];
+
+const summary = {
+ totalUsers: 'tba',
+  topWords: 
+   [ { key: 'a carrot', count: 602 },
+     { key: 'an elephant', count: 524 },
+     { key: 'a giraffe', count: 430 },
+     { key: 'a lion', count: 279 },
+     { key: 'a zebra', count: 210 },
+     { key: 'a domestic cat', count: 198 },
+     { key: 'a mobile phone', count: 187 },
+     { key: 'a television set', count: 176 },
+     { key: 'a tiger', count: 171 },
+     { key: 'a cell-phone', count: 164 } ],
+  categories: 
+   [ { key: 'Other', count: 13948 },
+     { key: 'Animal', count: 13678 },
+     { key: 'Vegetable', count: 3678 },
+     { key: 'Mineral', count: 2038 },
+     { key: 'Unknown', count: 1450 },
+     { key: 'No', count: 348 },
+     { key: 'Yes', count: 254 },
+     { key: 'Sometimes', count: 15 },
+     { key: 'Maybe', count: 7 },
+     { key: 'Partly', count: 6 },
+     { key: 'Depends', count: 3 },
+     { key: 'Doubtful', count: 3 },
+     { key: 'Usually', count: 1 },
+     { key: 'Probably', count: 1 } ],
+  quickest: 8,
+  quickestObj: 'a giraffe',
+  wins: 19338,
+  loses: 16095,
+  failed: 5990,
+  totalGames: 35430,
+  avgGameHr: 124}
 
 describe("src/helpers.js", function () {
     describe("get phrases", function () {
@@ -102,6 +139,13 @@ describe("src/helpers.js", function () {
         it("returns empty if not making a guess", function () {});
     });
 
+    describe("getRandomFact: function (summary) {}", function () {
+        it("returns a random fact", function () {
+            var retVal = helpers.getRandomFact(summary);
+            assert.isAtLeast(retVal.length, 10);
+        });
+    });
+
     xdescribe("randomInt: function (low, high) {}", function () {
         it("", function () {});
     });
@@ -147,5 +191,6 @@ describe("src/helpers.js", function () {
 //     else if (speech.indexOf("Can it help you find your way?") > -1) return speech.substring(0, speech.length - 1);
 //     else if (speech.indexOf("Does it cry?") > -1) return speech.substring(0, speech.length - 1);
 //     else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
+//     else if (speech.indexOf("Is it tall?") > -1) return speech.substring(0, speech.length - 1);
 //     return speech;
 // }
