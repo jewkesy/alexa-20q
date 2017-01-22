@@ -1,3 +1,5 @@
+![Alt text](./icons/20q_s.png?raw=false)
+
 # alexa-20q
 An Alexa App that allows you to play the Twenty Questions game with your Amazon Echo.
 
