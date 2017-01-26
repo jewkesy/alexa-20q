@@ -68,6 +68,8 @@ function handleSpeechQuerks(speech) {
     else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
     else if (speech.indexOf("Is it tall?") > -1) return speech.substring(0, speech.length - 1);
     else if (speech.indexOf("Is it used by the police?") > -1) return speech.substring(0, speech.length - 1);
+    else if (speech.indexOf("Does it purr?") > -1) return speech.substring(0, speech.length - 1);
+    // Does it purr?
     return speech;
 }
 
