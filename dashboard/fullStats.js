@@ -143,7 +143,7 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
 
   users.sort(sortByCount);
   var topUsers = users.slice(0, 10);
-  // console.log(users.length, topUsers);
+  console.log(users.length, topUsers);
 
   words.sort(sortByCount);  
   var topWords = words.slice(0, 10);
