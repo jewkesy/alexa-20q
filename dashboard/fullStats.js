@@ -7,7 +7,6 @@ var url = process.argv[2];  // process.env.mongoURI;
 var QCollection = process.argv[3];      // "stats";
 var StatsCollection = process.argv[4];  // "summary";
 
-
 exports.handler = function (event, context) {
   init();
 };
@@ -27,6 +26,7 @@ function init() {
       var users = [];
       var words = [];
       var cats = [];
+      var lastChar = [];
 
       var totalUsers = 0;
       var quickest = 30;
@@ -44,7 +44,7 @@ function init() {
         // console.log(docs.length, docs[0]);
         // getStats(docs);
         //  users, words, cats, quickest, quickestObj, win, lose, end)
-        var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
+        var summary = processResults(docs, users, lastChar, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
 
         console.log(summary);
 
@@ -81,7 +81,7 @@ var updateDocument = function(db, newDoc, callback) {
     assert.equal(1, result.result.n);
     // console.log("Updated the document", newDoc);
     callback(result);
-  });  
+  });
 };
 
 var indexCollection = function(db, callback) {
@@ -95,7 +95,7 @@ var indexCollection = function(db, callback) {
   );
 };
 
-function processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
+function processResults(docs, users, lastChar, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
   // console.log(docs.length, users.length, totalUsers, words.length, cats.length, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
   // var users = [];
   // var words = [];
@@ -104,7 +104,7 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
   // var quickest = 30;
   // var quickestObj = "";
   // var win = 0;
-  // var lose = 0;
+  // var lose = 0;users
   // var end = 0;
   var currHour = 0;
 
@@ -120,6 +120,12 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
 
   for (var i = 0; i < docs.length; i++) {
     upsertArray(docs[i].userId, users);
+
+    var char = docs[i].userId.substr(docs[i].userId.length - 3);
+    char = char.substr(0,1);
+
+
+    upsertArray(char, lastChar);
     upsertArray(docs[i].word, words);
     upsertArray(docs[i].type, cats)
 
@@ -145,7 +151,7 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
   var topUsers = users.slice(0, 10);
   console.log(users.length, topUsers);
 
-  words.sort(sortByCount);  
+  words.sort(sortByCount);
   var topWords = words.slice(0, 10);
 
   cats.sort(sortByCount);
@@ -165,6 +171,7 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
   }
 
   return {
+    lastChars: lastChar,
     dateTime: new Date(),
     gameCollection: 'stats',
     returningUserCount: returningUserCount,
