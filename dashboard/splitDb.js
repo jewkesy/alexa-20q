@@ -22,30 +22,30 @@ var dbs = {
   9: 35069,
   a: 35089,
   b: 35049,
-  c: 35059,
+  c: 35039,
   d: 35039,
   e: 35049,
   f: 35029,
   g: 35089,
   h: 35089,
   i: 35039,
-  j: 35059,
+  j: 35089,
   k: 35029,
   l: 35089,
-  // m: ,
-  // n: ,
-  // o: ,
-  // p: ,
-  // q: ,
-  // r: ,
-  // s: ,
-  // t: ,
-  // u: ,
-  // v: ,
-  // w: ,
-  // x: ,
-  // y: ,
-  // z:
+  m: 35029,
+  n: 35039,
+  o: 35089,
+  p: 35049,
+  q: 35089,
+  r: 35049,
+  s: 35039,
+  t: 35049,
+  u: 35039,
+  v: 35089,
+  w: 35029,
+  x: 45009,
+  y: 35069,
+  z: 35029
 }
 
 
@@ -60,19 +60,23 @@ function init() {
 
   var urls = buildUrls();
 
-
-
-
   async.forEachOf(urls, function (value, key, callback) {
 
     console.log(value, key)
 
     MongoClient.connect(value, function(err, db) {
 
-      if (err) {console.log(value);  return callback(err)}
+      if (err) {console.log(db);  return callback(err)}
 
-      console.log("Connected successfully to server");
-      return callback();
+      console.log("Connected successfully to server", db.databaseName);
+
+      indexCollection({timestamp: 1}, "stats", db, function () {
+        indexCollection({userId: 1}, "stats", db, function () {
+          return callback();
+        });
+      });
+
+      
 
     });
   }, function (err) {
@@ -113,9 +117,9 @@ var findDocuments = function(db, coll, filter, proj, sort, callback) {
   });
 };
 
-var updateDocument = function(db, newDoc, callback) {
+var updateDocument = function(coll, db, newDoc, callback) {
   // Get the documents collection
-  var collection = db.collection(StatsCollection);
+  var collection = db.collection(coll);
   // Update document where a is 2, set b equal to 1
 
   collection.update({ gameCollection : 'stats' }, newDoc, {upsert: true, multi: false} , function(err, result) {
@@ -126,9 +130,9 @@ var updateDocument = function(db, newDoc, callback) {
   });
 };
 
-var indexCollection = function(db, callback) {
-  db.collection(QCollection).createIndex(
-    { "timestamp": 1 },
+var indexCollection = function(field, coll, db, callback) {
+  db.collection(coll).createIndex(
+    field,
       null,
       function(err, results) {
         console.log(results);
