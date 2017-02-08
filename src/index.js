@@ -5,13 +5,52 @@ var MongoClient = require('mongodb').MongoClient;
 
 var ALEXA_APP_ID = process.env.appID;
 var MONGODB_URI = process.env.mongoURI;
+var USER = process.env.mongoUser;
+var PWD = process.env.mongoPwd;
 var SAVE_TO_DB = process.env.savetoDB;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
 var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
 var TIMEOUT = parseInt(process.env.timeout);
 var lang = '/gsq-enUK';  // or '/gsq-en' for US
 var regions = 'GB,NL,US';  // or 'US,MX,CA,KH' for US
-
+var dbs = {
+  0: 35069,
+  1: 35089,
+  2: 35069,
+  3: 35029,
+  4: 35049,
+  5: 35029,
+  6: 35069,
+  7: 35069,
+  8: 35069,
+  9: 35069,
+  a: 35089,
+  b: 35049,
+  c: 35039,
+  d: 35039,
+  e: 35049,
+  f: 35029,
+  g: 35089,
+  h: 35089,
+  i: 35039,
+  j: 35089,
+  k: 35029,
+  l: 35089,
+  m: 35029,
+  n: 35039,
+  o: 35089,
+  p: 35049,
+  q: 35089,
+  r: 35049,
+  s: 35039,
+  t: 35049,
+  u: 35039,
+  v: 35089,
+  w: 35029,
+  x: 45009,
+  y: 35069,
+  z: 35029
+}
 var helpers = require('helpers.js');
 
 exports.handler = function (event, context) {
@@ -423,10 +462,19 @@ function startGame(callback) {
     });
 }
 
+function getMongoURIForUser(userId) {
+    var char = userId.substr(userId.length - 3);
+    char = char.substr(0,1).toLowerCase();
+    var idx = dbs[char];
+    var retVal = "mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + char;
+    console.log(retVal);
+    return retVal;
+}
+
 function writeToMongo(userId, word, num, type, win, callback) {
     if (SAVE_TO_DB == 'false') return callback(null, {});
 
-    MongoClient.connect(MONGODB_URI, function(err, db) {
+    MongoClient.connect(getMongoURIForUser(userId), function(err, db) {
         if (err) {
             console.log('mongodb conn err', err);
             return callback(err);
