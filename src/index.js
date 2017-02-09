@@ -2,11 +2,13 @@ var request = require('request');
 var cheerio = require('cheerio');
 var console = require('tracer').colorConsole();
 var MongoClient = require('mongodb').MongoClient;
+var async = require('async');
 
 var ALEXA_APP_ID = process.env.appID;
 var MONGODB_URI = process.env.mongoURI;
 var USER = process.env.mongoUser;
 var PWD = process.env.mongoPwd;
+var MONGOAPIKEY = process.env.mongoAPIKey;
 var SAVE_TO_DB = process.env.savetoDB;
 var TWENTY_QUESTIONS_DATA_URL = process.env.dataURL;
 var TWENTY_QUESTIONS_HOME_URL = process.env.webURL;
@@ -344,14 +346,14 @@ function askNextQuestion(uri, answer, session, callback) {
             var guess = helpers.getGuessText(sessionAttributes.questionText);
             if($('h2').first().text() == "20Q won!") {
                 console.log('20Q won: ', guess, session.user.userId);
-                writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
+                writeToMongoUsingHttp(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, true, function(err, results) {
                     // console.log(results);
                     sessionAttributes.history += helpers.getRandomFact(results);
                     return callback(sessionAttributes, buildSpeechletResponse("I won!",  "I win!\n"   + helpers.getWinPhrase() + ending, "", true, sessionAttributes.history));
                  });
             } else {
                 console.log('20Q lost: ', guess, session.user.userId);
-                writeToMongo(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
+                writeToMongoUsingHttp(session.user.userId, guess, sessionAttributes.questionNum, sessionAttributes.type, false, function(err, results) {
                     // console.log(results);
                     sessionAttributes.history += helpers.getRandomFact(results);
                     return callback(sessionAttributes, buildSpeechletResponse("I lost!", "You win!\n" + helpers.getLostPhrase() + ending, "", true, sessionAttributes.history));
@@ -471,41 +473,103 @@ function getMongoURIForUser(userId) {
     return retVal;
 }
 
-function writeToMongo(userId, word, num, type, win, callback) {
-    if (SAVE_TO_DB == 'false') return callback(null, {});
+function getMongoURLForUser(userId) {
+    var char = userId.substr(userId.length - 3);
+    char = char.substr(0,1).toLowerCase();
+    var idx = dbs[char];
+    var retVal = "https://api.mlab.com/api/1/databases/twentyquestions_" + char + "/collections/stats?apiKey=" + MONGOAPIKEY;
+    return retVal;
+}
 
-    MongoClient.connect(getMongoURIForUser(userId), function(err, db) {
-        if (err) {
-            console.log('mongodb conn err', err);
-            return callback(err);
-        }
-        // console.log("Connected correctly to server");
+function writeToMongoUsingHttp(userId, word, num, type, win, callback) {
+  if (SAVE_TO_DB == 'false') return callback(null, {});
 
-        var collection = db.collection('stats');
-        collection.insertOne({
-            'userId': userId,
-            'word': word,
-            'num': num,
-            'win': win,
-            'type': type,
-            'timestamp': +new Date,
-            'datetime': new Date().toLocaleString()}, function(err, result) {
+    async.parallel({
+      save: function(cb) {
+
+          var url = getMongoURLForUser(userId);
+
+          var json = {
+              'userId': userId,
+              'word': word,
+              'num': num,
+              'win': win,
+              'type': type,
+              'timestamp': +new Date,
+              'datetime': new Date().toLocaleString()};
+
+          request.post({
+            headers: {'content-type' : 'application/json'},
+            url:     url,
+            body:    JSON.stringify(json)
+          }, function(err, response, body){
+            // console.log('done 1')
+            return cb(err, url)
+          });
+
+      },
+      stats: function(cb) {
+
+        request.get({
+            headers: {'content-type' : 'application/json'},
+            url:     "https://api.mongolab.com/api/1/databases/twentyquestions/collections/summary?apiKey=" + MONGOAPIKEY
+          }, function(err, response, body){
+            // console.log('done 2')
+            return cb(err, JSON.parse(body))
+          });
+      }
+  }, function(err, results) {
+    return callback(err, results.stats[0]);
+  });
+}
+
+function writeToMongoUsingClient(userId, word, num, type, win, callback) {
+  if (SAVE_TO_DB == 'false') return callback(null, {});
+
+  async.parallel({
+      save: function(cb) {
+          MongoClient.connect(getMongoURIForUser(userId), function(err, db) {
+            if (err) {
+              console.log('mongodb conn err save', err);
+              return cb(err);
+            }
+            var collection = db.collection('stats');
+            collection.insertOne({
+              'userId': userId,
+              'word': word,
+              'num': num,
+              'win': win,
+              'type': type,
+              'timestamp': +new Date,
+              'datetime': new Date().toLocaleString()}, function(err, result) {
+                db.close();
                 if (err) {
                     console.log('mongodb save err', err);
-                    db.close();
-                    return callback(err);
+                    return cb(err);
                 }
-                var summary = db.collection('summary');
-                summary.findOne({}, function (err, item) {
-                    db.close();
-                    if (err) {
-                        console.log('mongodb find err', err);
-                        return callback(err);
-                    }
+                return cb(null, result);
+            });
+          });
+      },
+      stats: function(cb) {
+        MongoClient.connect(MONGODB_URI, function(err, db) {
+          if (err) {
+              console.log('mongodb conn err stats', err);
+              return cb(err);
+          }
+          var summary = db.collection('summary');
+          summary.findOne({}, function (err, item) {
+            db.close();
+            if (err) {
+              console.log('mongodb find err', err);
+              return cb(err);
+            }
 
-                    // console.log(item)
-                    return callback(null, item);
-                });
+            return cb(null, item);
+          });
         });
-    });
+      }
+  }, function(err, results) {
+    return callback(err, results.stats);
+  });
 }

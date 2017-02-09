@@ -2,7 +2,7 @@
 var console = require('tracer').colorConsole();
 var MongoClient = require('mongodb').MongoClient, assert = require('assert');
 var async = require('async');
-
+var request = require('request');
 // Connection URL
 // var url = process.argv[2];  // process.env.mongoURI;
 // var QCollection = process.argv[3];      // "stats";
@@ -10,7 +10,8 @@ var async = require('async');
 var SAVE_TO_DB = true;
 var USER = process.argv[2];
 var PWD = process.argv[3];
-var MONGODB_URI = process.argv[4]; 
+var MONGODB_URI = process.argv[4];
+var MONGOAPIKEY = process.argv[5];
 
 var dbs = {
   0: 35069,
@@ -57,9 +58,9 @@ exports.handler = function (event, context) {
   //rebuildIndexes();
 };
 
-writeToMongo(amz, 'test', 99, 'splitDb.js', false, function (err, result) {
-  if (err) return console.log(err);
-  return console.log(result);
+writeToMongoUsingHttp(amz, 'test', 99, 'splitDb.js', false, function (err, result) {
+  // if (err) return console.log(err);
+  // return console.log(result.stats);
 });
 //rebuildIndexes();
 
@@ -157,7 +158,57 @@ function getMongoURIForUser(userId) {
     return retVal;
 }
 
-function writeToMongo(userId, word, num, type, win, callback) {
+function getMongoURLForUser(userId) {
+    var char = userId.substr(userId.length - 3);
+    char = char.substr(0,1).toLowerCase();
+    var idx = dbs[char];
+    var retVal = "https://api.mlab.com/api/1/databases/twentyquestions_" + char + "/collections/stats?apiKey=" + MONGOAPIKEY;
+    return retVal;
+}
+
+function writeToMongoUsingHttp(userId, word, num, type, win, callback) {
+  if (SAVE_TO_DB == 'false') return callback(null, {});
+
+    async.parallel({
+      save: function(cb) {
+
+          var url = getMongoURLForUser(userId);
+
+          var json = {
+              'userId': userId,
+              'word': word,
+              'num': num,
+              'win': win,
+              'type': type,
+              'timestamp': +new Date,
+              'datetime': new Date().toLocaleString()};
+
+          request.post({
+            headers: {'content-type' : 'application/json'},
+            url:     url,
+            body:    JSON.stringify(json)
+          }, function(err, response, body){
+            // console.log('done 1')
+            return cb(err, url)
+          });
+
+      },
+      stats: function(cb) {
+
+        request.get({
+            headers: {'content-type' : 'application/json'},
+            url:     "https://api.mongolab.com/api/1/databases/twentyquestions/collections/summary?apiKey=" + MONGOAPIKEY
+          }, function(err, response, body){
+            // console.log('done 2')
+            return cb(err, JSON.parse(body))
+          });
+      }
+  }, function(err, results) {
+    return callback(err, results.stats[0]);
+  });
+}
+
+function writeToMongoUsingClient(userId, word, num, type, win, callback) {
   if (SAVE_TO_DB == 'false') return callback(null, {});
 
   async.parallel({
@@ -204,7 +255,7 @@ function writeToMongo(userId, word, num, type, win, callback) {
         });
       }
   }, function(err, results) {
-    return callback(err, results);
+    return callback(err, results.stats);
   });
 }
 
