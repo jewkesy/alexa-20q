@@ -7,7 +7,10 @@ var async = require('async');
 // var url = process.argv[2];  // process.env.mongoURI;
 // var QCollection = process.argv[3];      // "stats";
 // var StatsCollection = process.argv[4];  // "summary";
-
+var SAVE_TO_DB = true;
+var USER = process.argv[2];
+var PWD = process.argv[3];
+var MONGODB_URI = process.argv[4]; 
 
 var dbs = {
   0: 35069,
@@ -48,15 +51,19 @@ var dbs = {
   z: 35029
 }
 
-
+var amz = "amzn1.ask.account.AEBLVM4M4OQFMXUQIDFHHO6SVQMU6UH5CCQVAJ7TDXQHFFVNQ37TDOQCPTDZU2A22DZ6TAP5TTRP4QGFHRNSIIIKP6ILSR26GGR2O5DQHF3APX3A4RJHLKJ5A4G2L3F3FEQLNJ6LAQAJTSXB2ANRN25M3RU755Q4HBVNGRQLY3QH4OPMJXASHECDYUJ47GXGW57TKG6ESJUFMDY";
 
 exports.handler = function (event, context) {
-  init();
+  //rebuildIndexes();
 };
 
-init();
+writeToMongo(amz, 'test', 99, 'splitDb.js', false, function (err, result) {
+  if (err) return console.log(err);
+  return console.log(result);
+});
+//rebuildIndexes();
 
-function init() {
+function rebuildIndexes() {
 
   var urls = buildUrls();
 
@@ -140,3 +147,64 @@ var indexCollection = function(field, coll, db, callback) {
     }
   );
 };
+
+function getMongoURIForUser(userId) {
+    var char = userId.substr(userId.length - 3);
+    char = char.substr(0,1).toLowerCase();
+    var idx = dbs[char];
+    var retVal = "mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + char;
+    // console.log(retVal);
+    return retVal;
+}
+
+function writeToMongo(userId, word, num, type, win, callback) {
+  if (SAVE_TO_DB == 'false') return callback(null, {});
+
+  async.parallel({
+      save: function(cb) {
+          MongoClient.connect(getMongoURIForUser(userId), function(err, db) {
+            if (err) {
+              console.log('mongodb conn err save', err);
+              return cb(err);
+            }
+            var collection = db.collection('stats');
+            collection.insertOne({
+              'userId': userId,
+              'word': word,
+              'num': num,
+              'win': win,
+              'type': type,
+              'timestamp': +new Date,
+              'datetime': new Date().toLocaleString()}, function(err, result) {
+                db.close();
+                if (err) {
+                    console.log('mongodb save err', err);
+                    return cb(err);
+                }
+                return cb(null, result);
+            });
+          });
+      },
+      stats: function(cb) {
+        MongoClient.connect(MONGODB_URI, function(err, db) {
+          if (err) {
+              console.log('mongodb conn err stats', err);
+              return cb(err);
+          }
+          var summary = db.collection('summary');
+          summary.findOne({}, function (err, item) {
+            db.close();
+            if (err) {
+              console.log('mongodb find err', err);
+              return cb(err);
+            }
+
+            return cb(null, item);
+          });
+        });
+      }
+  }, function(err, results) {
+    return callback(err, results);
+  });
+}
+

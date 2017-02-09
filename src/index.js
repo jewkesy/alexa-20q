@@ -467,7 +467,7 @@ function getMongoURIForUser(userId) {
     char = char.substr(0,1).toLowerCase();
     var idx = dbs[char];
     var retVal = "mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + char;
-    console.log(retVal);
+    // console.log(retVal);
     return retVal;
 }
 
