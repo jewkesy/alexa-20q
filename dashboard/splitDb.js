@@ -51,18 +51,62 @@ var dbs = {
   y: 35069,
   z: 35029
 }
-
+// DEV ID
 var amz = "amzn1.ask.account.AEBLVM4M4OQFMXUQIDFHHO6SVQMU6UH5CCQVAJ7TDXQHFFVNQ37TDOQCPTDZU2A22DZ6TAP5TTRP4QGFHRNSIIIKP6ILSR26GGR2O5DQHF3APX3A4RJHLKJ5A4G2L3F3FEQLNJ6LAQAJTSXB2ANRN25M3RU755Q4HBVNGRQLY3QH4OPMJXASHECDYUJ47GXGW57TKG6ESJUFMDY";
 
 exports.handler = function (event, context) {
   //rebuildIndexes();
 };
 
-writeToMongoUsingHttp(amz, 'test', 99, 'splitDb.js', false, function (err, result) {
-  // if (err) return console.log(err);
-  // return console.log(result.stats);
+buildStats(function (err, result) {
+  console.log(err, result);
 });
-//rebuildIndexes();
+
+// writeToMongoUsingHttp(amz, 'test', 99, 'splitDb.js', false, function (err, result) {
+//   if (err) return console.log(err);
+//   return console.log(result.stats);
+// });
+
+function buildStats(callback) {
+  var urls = buildUrls();
+  urls.push(MONGODB_URI)
+  console.log(urls)
+
+  async.forEachOf(urls, function (value, key, cb) {
+
+    console.log(value, key)
+
+    MongoClient.connect(value, function(err, db) {
+
+      if (err) {console.log(db);  return callback(err)}
+
+      console.log("Connected successfully to server", db.databaseName);
+
+      findDocuments(db, 'stats', {}, {}, {}, function(docs) {
+        db.close();
+        if (err) {
+          console.log('mongodb find err', err);
+          return cb(err);
+        }
+        console.log(docs.length, db.databaseName)
+        return cb(null, docs);
+      });
+
+    });
+  }, function (err, results) {
+    if (err) return callback(err);
+
+    console.log(results.length)
+
+    // configs is now a map of JSON data
+    // doSomethingWith(configs);
+
+    return callback(null, results)
+
+  });
+}
+
+
 
 function rebuildIndexes() {
 
