@@ -72,6 +72,8 @@ function buildStats(callback) {
   urls.push(MONGODB_URI)
   console.log(urls)
 
+  var combStats = {};
+
   async.forEachOf(urls, function (value, key, cb) {
 
     console.log(value, key)
@@ -81,27 +83,36 @@ function buildStats(callback) {
       if (err) {console.log(db);  return callback(err)}
 
       console.log("Connected successfully to server", db.databaseName);
+      var coll = 'stats';
+      if (db.databaseName == 'twentyquestions') coll = 'summary';
 
-      findDocuments(db, 'stats', {}, {}, {}, function(docs) {
+      findDocuments(db, coll, {}, {}, {}, function(docs) {
         db.close();
         if (err) {
           console.log('mongodb find err', err);
           return cb(err);
         }
-        console.log(docs.length, db.databaseName)
-        return cb(null, docs);
+        // console.log(docs, db.databaseName)
+        if (db.databaseName == 'twentyquestions') {
+          combStats[db.databaseName] = docs[0];
+        } else {
+          combStats[db.databaseName] = docs.length;
+        }
+
+        
+        return cb(null);
       });
 
     });
-  }, function (err, results) {
+  }, function (err) {
     if (err) return callback(err);
 
-    console.log(results.length)
+    console.log(combStats)
 
     // configs is now a map of JSON data
     // doSomethingWith(configs);
 
-    return callback(null, results)
+    return callback(null, combStats)
 
   });
 }
