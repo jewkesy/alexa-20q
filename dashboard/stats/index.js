@@ -5,14 +5,14 @@ var async = require('async');
 
 var QCollection = "stats";
 var StatsCollection = "summary";
-var USER = process.argv[2];
-var PWD = process.argv[3];
-var MONGODB_URI = process.argv[4];
-var MONGOAPIKEY = process.argv[5];
-// var USER = process.env.mongoUser;
-// var PWD = process.env.mongoPwd;
-// var MONGODB_URI = process.env.mongoURI;
-// var MONGOAPIKEY = process.env.mongoAPIKey;
+// var USER = process.argv[2];
+// var PWD = process.argv[3];
+// var MONGODB_URI = process.argv[4];
+// var MONGOAPIKEY = process.argv[5];
+var USER = process.env.mongoUser;
+var PWD = process.env.mongoPwd;
+var MONGODB_URI = process.env.mongoURI;
+var MONGOAPIKEY = process.env.mongoAPIKey;
 
 var dbs = {
   0: 35069,
@@ -55,13 +55,13 @@ var dbs = {
 
 exports.handler = function (event, context) {
   buildStats(function (err, result) {
-    console.log('done');
+    console.log(err, result);
   });
 };
 
-buildStats(function (err, result) {
-  // console.log('done');
-});
+// buildStats(function (err, result) {
+//   // console.log('done');
+// });
 
 function buildStats(callback) {
   var urls = buildUrls();
@@ -76,7 +76,7 @@ function buildStats(callback) {
 
     MongoClient.connect(value, function(err, db) {
 
-      if (err) {console.log(db);  return callback(err)}
+      if (err) {console.log(err, value);  return callback(err)}
 
       // console.log("Connected successfully to server", db.databaseName);
       // var coll = 'summary';
@@ -147,7 +147,7 @@ function buildStats(callback) {
   }, function (err) {
     if (err) return callback(err);
 
-    return callback(null, null);
+    return callback(null, 'TODO: Merge stuff');
 
 
 
@@ -189,14 +189,12 @@ function buildStats(callback) {
 
 function buildUrls() {
   var urls = []
-  var user = process.argv[2];
-  var pwd = process.argv[3]
 
   for (var j in dbs) {
       // console.log(j);
       var idx = dbs[j];
 
-      urls.push("mongodb://" + user +  ":" + pwd + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + j  )
+      urls.push("mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + j  )
   }
 
   return urls
