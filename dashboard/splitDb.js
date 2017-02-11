@@ -83,24 +83,76 @@ function buildStats(callback) {
       if (err) {console.log(db);  return callback(err)}
 
       console.log("Connected successfully to server", db.databaseName);
-      var coll = 'stats';
+      var coll = 'summary';
       if (db.databaseName == 'twentyquestions') coll = 'summary';
 
-      findDocuments(db, coll, {}, {}, {}, function(docs) {
-        db.close();
+      findDocuments(db, 'summary', {}, {}, {}, function(docs) {
+        // db.close();
         if (err) {
           console.log('mongodb find err', err);
           return cb(err);
         }
-        // console.log(docs, db.databaseName)
-        if (db.databaseName == 'twentyquestions') {
-          combStats[db.databaseName] = docs[0];
-        } else {
-          combStats[db.databaseName] = docs.length;
-        }
 
-        
-        return cb(null);
+      var filter = {};
+
+      var users = [];
+      var words = [];
+      var cats = [];
+
+      var totalUsers = 0;
+      var quickest = 30;
+      var quickestObj = "";
+      var win = 0;
+      var lose = 0;
+      var end = 0;
+      var totalGames = 0;
+      var startTimeStamp = 0;
+
+      if (docs.length > 0) {
+        if (typeof docs[0].last_id == 'undefined') filter = {};
+        else filter = {_id: {$gt: docs[0].last_id}};
+
+        // console.log(docs[0]);
+        users = [];
+        // totalUsers = docs[0].totalUsers;
+        words = docs[0].topWords;
+        cats = docs[0].categories;
+        quickest = docs[0].quickest;
+        quickestObj = docs[0].quickestObj;
+        win = docs[0].wins;
+        lose = docs[0].loses;
+        end = docs[0].failed;
+        totalGames = docs[0].totalGames;
+        startTimeStamp = docs[0].startTimeStamp;
+      }
+
+      findDocuments(db, 'stats', filter, {datetime: 0}, {}, function(docs) {
+        if (docs.length == 0) { console.log(db.databaseName, "no docs, returning"); db.close(); return cb(null);}
+        if (startTimeStamp == 0) startTimeStamp = docs[0].timestamp;
+        // console.log(docs.length, docs[0]);
+        // getStats(docs);
+        //  users, words, cats, quickest, quickestObj, win, lose, end)
+        var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
+
+        console.log(summary);
+
+        return cb()
+
+        updateDocument('summary', db, summary, function (result) {
+          // console.log(result);
+          db.close();
+          return cb(null);
+        });
+      });
+
+        // // console.log(docs, db.databaseName)
+        // if (db.databaseName == 'twentyquestions') {
+        //   combStats[db.databaseName] = docs[0];
+        // } else {
+        //   combStats[db.databaseName] = docs.length;
+        // }
+
+        // return cb(null);
       });
 
     });
@@ -117,7 +169,97 @@ function buildStats(callback) {
   });
 }
 
+function processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
+  // console.log(docs.length, users.length, totalUsers, words.length, cats.length, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
+  // var users = [];
+  // var words = [];
+  // var cats = [];
 
+  // var quickest = 30;
+  // var quickestObj = "";
+  // var win = 0;
+  // var lose = 0;
+  // var end = 0;
+  var currHour = 0;
+
+  var nowDate = +new Date;
+  var ONE_HOUR = 60 * 60 * 1000;
+
+  var startDate = new Date(startTimeStamp);
+  var endDate = new Date(docs[docs.length-1].timestamp);
+
+  var hours = Math.abs(startDate - endDate) / 36e5;
+  var gPerHr = Math.ceil((docs.length+totalGames)/Math.ceil(hours));
+  // console.log(startDate, endDate, Math.ceil(hours), gPerHr);
+
+  for (var i = 0; i < docs.length; i++) {
+    upsertArray(docs[i].userId, users);
+    upsertArray(docs[i].word, words);
+    upsertArray(docs[i].type, cats)
+
+    if ((nowDate - docs[i].timestamp) < ONE_HOUR) currHour++;
+
+    if (docs[i].num < quickest) {
+      quickest = docs[i].num;
+      quickestObj = docs[i].word;
+    }
+    if (docs[i].num == 30) {
+      if (docs[i].win) {
+        // console.log('check me')
+        lose++;
+      } else {
+        // console.log('check me too')
+        end++;
+      }
+    }
+    if (docs[i].win) win++; else lose++;
+  }
+
+  // users.sort(sortByCount);
+  // var topUsers = users.slice(0, 10);
+  // console.log(users.length, topUsers);
+
+  words.sort(sortByCount);  
+  var topWords = words.slice(0, 10);
+
+  cats.sort(sortByCount);
+
+  // console.log(topWords);
+  // var returningUserCount = 0;
+  // for (var i = 0; i < users.length; i++) {
+  //   if (users[i].count == 2) {
+  //     returningUserCount = i+1;
+  //     break;
+  //   }
+  // }
+
+  // for (var i = 0; i < topUsers.length; i++) {
+  //   topUsers[i].key = i+1;
+  // }
+
+  return {
+    dateTime: new Date(),
+    gameCollection: 'stats',
+    // returningUserCount: returningUserCount,
+    // topUsers: topUsers,
+    // totalUsers: totalUsers + users.length,
+    totalUsers: "tba",
+    topWords: topWords,
+    categories: cats,
+    quickest: quickest,
+    quickestObj: quickestObj,
+    wins: win,
+    loses: lose,
+    failed: end,
+    totalGames: totalGames + docs.length,
+    avgGameHr: gPerHr,
+    currHour: currHour,
+    last_id: docs[docs.length-1]._id,
+    startTime: "Tue Dec 27 2016 22:38:20 GMT+0000 (UTC)", // docs[0].datetime,
+    startTimeStamp: 1482878300965,
+    lastGame: docs[docs.length-1]
+  }
+}
 
 function rebuildIndexes() {
 
@@ -313,4 +455,29 @@ function writeToMongoUsingClient(userId, word, num, type, win, callback) {
     return callback(err, results.stats);
   });
 }
+
+function sortByCount(a,b) {
+  if (a.count < b.count)
+    return 1;
+  if (a.count > b.count)
+    return -1;
+  return 0;
+}
+
+function upsertArray(key, array) {
+  var position = keyExists(key, array);
+  if (position > -1) {
+    array[position].count++;
+  } else {
+    array.push({key: key, count: 1});
+  }
+}
+
+function keyExists(name, arr) {
+  for(var i = 0, len = arr.length; i < len; i++) {
+    if( arr[ i ].key === name ) return i;
+  }
+  return -1;
+}
+
 

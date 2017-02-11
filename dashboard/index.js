@@ -1,84 +1,206 @@
 "use strict";
 var console = require('tracer').colorConsole();
 var MongoClient = require('mongodb').MongoClient, assert = require('assert');
+var async = require('async');
 
-// Connection URL
-var url = process.argv[2];  // process.env.mongoURI;
-var QCollection = process.argv[3];      // "stats";
-var StatsCollection = process.argv[4];  // "summary";
+var QCollection = "stats";
+var StatsCollection = "summary";
+var USER = process.argv[2];
+var PWD = process.argv[3];
+var MONGODB_URI = process.argv[4];
+var MONGOAPIKEY = process.argv[5];
+// var USER = process.env.mongoUser;
+// var PWD = process.env.mongoPwd;
+// var MONGODB_URI = process.env.mongoURI;
+// var MONGOAPIKEY = process.env.mongoAPIKey;
+
+var dbs = {
+  0: 35069,
+  1: 35089,
+  2: 35069,
+  3: 35029,
+  4: 35049,
+  5: 35029,
+  6: 35069,
+  7: 35069,
+  8: 35069,
+  9: 35069,
+  a: 35089,
+  b: 35049,
+  c: 35039,
+  d: 35039,
+  e: 35049,
+  f: 35029,
+  g: 35089,
+  h: 35089,
+  i: 35039,
+  j: 35089,
+  k: 35029,
+  l: 35089,
+  m: 35029,
+  n: 35039,
+  o: 35089,
+  p: 35049,
+  q: 35089,
+  r: 35049,
+  s: 35039,
+  t: 35049,
+  u: 35039,
+  v: 35089,
+  w: 35029,
+  x: 45009,
+  y: 35069,
+  z: 35029
+}
 
 exports.handler = function (event, context) {
-  init();
+  buildStats(function (err, result) {
+    console.log('done');
+  });
 };
 
-init();
+buildStats(function (err, result) {
+  // console.log('done');
+});
 
-function init() {
-    // Use connect method to connect to the server
-  MongoClient.connect(url, function(err, db) {
-    assert.equal(null, err);
-    console.log("Connected successfully to server");
+function buildStats(callback) {
+  var urls = buildUrls();
+  urls.push(MONGODB_URI)
+  // console.log(urls)
 
-    findDocuments(db, StatsCollection, {}, {}, {}, function(docs) {
-      // var currSummary;
-      var filter = {};
+  var combStats = {};
 
-      var users = [];
-      var words = [];
-      var cats = [];
+  async.forEachOf(urls, function (value, key, cb) {
 
-      var totalUsers = 0;
-      var quickest = 30;
-      var quickestObj = "";
-      var win = 0;
-      var lose = 0;
-      var end = 0;
-      var totalGames = 0;
-      var startTimeStamp = 0;
+    // console.log(value, key)
 
-      if (docs.length > 0) {
-        if (typeof docs[0].last_id == 'undefined') filter = {};
-        else filter = {_id: {$gt: docs[0].last_id}};
+    MongoClient.connect(value, function(err, db) {
 
-        // console.log(docs[0]);
-        users = [];
-        // totalUsers = docs[0].totalUsers;
-        words = docs[0].topWords;
-        cats = docs[0].categories;
-        quickest = docs[0].quickest;
-        quickestObj = docs[0].quickestObj;
-        win = docs[0].wins;
-        lose = docs[0].loses;
-        end = docs[0].failed;
-        totalGames = docs[0].totalGames;
-        startTimeStamp = docs[0].startTimeStamp;
-      }
+      if (err) {console.log(db);  return callback(err)}
 
-      findDocuments(db, QCollection, filter, {datetime: 0}, {}, function(docs) {
-        if (docs.length == 0) { console.log("no docs, returning"); db.close(); return;}
-        if (startTimeStamp == 0) startTimeStamp = docs[0].timestamp;
-        // console.log(docs.length, docs[0]);
-        // getStats(docs);
-        //  users, words, cats, quickest, quickestObj, win, lose, end)
-        var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
+      // console.log("Connected successfully to server", db.databaseName);
+      // var coll = 'summary';
+      // if (db.databaseName == 'twentyquestions') coll = 'summary';
 
-        // console.log(summary);
+      findDocuments(db, 'summary', {}, {}, {}, function(docs) {
+        // db.close();
+        if (err) {
+          console.log('mongodb find err', err);
+          return cb(err);
+        }
 
-        // console.log("merge this: ", currSummary, "to this: ", summary);
-        // var newSum = mergeSummaries(currSummary, summary);
+        if (db.databaseName == 'twentyquestions') {
+          combStats[db.databaseName] = docs[0];
+          // console.log(docs);
+          return cb(null);
+        }
 
-        updateDocument(db, summary, function (result) {
-          // console.log(result);
-          db.close();
+        var filter = {};
+
+        var users = [];
+        var words = [];
+        var cats = [];
+
+        var totalUsers = 0;
+        var quickest = 30;
+        var quickestObj = "";
+        var win = 0;
+        var lose = 0;
+        var end = 0;
+        var totalGames = 0;
+        var startTimeStamp = 0;
+
+        if (docs.length > 0) {
+          if (typeof docs[0].last_id == 'undefined') filter = {};
+          else filter = {_id: {$gt: docs[0].last_id}};
+
+          users = [];
+          words = docs[0].topWords;
+          cats = docs[0].categories;
+          quickest = docs[0].quickest;
+          quickestObj = docs[0].quickestObj;
+          win = docs[0].wins;
+          lose = docs[0].loses;
+          end = docs[0].failed;
+          totalGames = docs[0].totalGames;
+          startTimeStamp = docs[0].startTimeStamp;
+        }
+
+        findDocuments(db, 'stats', filter, {datetime: 0}, {}, function(docs) {
+          if (docs.length == 0) { console.log(db.databaseName, "no docs, returning"); db.close(); return cb(null);}
+          if (startTimeStamp == 0) startTimeStamp = docs[0].timestamp;
+          console.log(docs.length, db.databaseName);
+          // getStats(docs);
+          //  users, words, cats, quickest, quickestObj, win, lose, end)
+          var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
+
+          combStats[db.databaseName] = summary;
+
+          updateDocument('summary', db, summary, function (result) {
+            db.close();
+            return cb(null);
+          });
         });
       });
+
     });
+  }, function (err) {
+    if (err) return callback(err);
+
+    return callback(null, null);
+
+
+
+    // now we have all the stats, merge to master
+
+    var fullStats = combStats.twentyquestions;
+    console.log(fullStats.totalGames);
+
+    Object.keys(combStats).forEach(function(key) {
+      if (key == 'twentyquestions') return;
+
+      // console.log(key)
+      var val = combStats[key];
+
+      // topWords
+      // categories
+      // quickest
+      // quickestObj
+
+      // wins
+      fullStats.wins += val.wins;
+      // loses
+      fullStats.loses += val.loses;
+      // failed
+      fullStats.failed += val.failed;
+      // totalGames
+      fullStats.totalGames += val.totalGames;
+      // avgGameHr
+      // currHour
+      // lastGame
+
+      // console.log(val)
+    });
+
+    // return callback(null, combStats)
+    return callback(null, null);
   });
 }
 
-// function mergeSummaries(currSum, newSum) {
-//   return newSum;
-// }
+function buildUrls() {
+  var urls = []
+  var user = process.argv[2];
+  var pwd = process.argv[3]
+
+  for (var j in dbs) {
+      // console.log(j);
+      var idx = dbs[j];
+
+      urls.push("mongodb://" + user +  ":" + pwd + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + j  )
+  }
+
+  return urls
+}
 
 var findDocuments = function(db, coll, filter, proj, sort, callback) {
   // Get the documents collection
@@ -91,9 +213,9 @@ var findDocuments = function(db, coll, filter, proj, sort, callback) {
   });
 };
 
-var updateDocument = function(db, newDoc, callback) {
+var updateDocument = function(coll, db, newDoc, callback) {
   // Get the documents collection
-  var collection = db.collection(StatsCollection);
+  var collection = db.collection(coll);
   // Update document where a is 2, set b equal to 1
 
   collection.update({ gameCollection : 'stats' }, newDoc, {upsert: true, multi: false} , function(err, result) {
@@ -116,16 +238,7 @@ var indexCollection = function(db, callback) {
 };
 
 function processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
-  // console.log(docs.length, users.length, totalUsers, words.length, cats.length, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
-  // var users = [];
-  // var words = [];
-  // var cats = [];
 
-  // var quickest = 30;
-  // var quickestObj = "";
-  // var win = 0;
-  // var lose = 0;
-  // var end = 0;
   var currHour = 0;
 
   var nowDate = +new Date;
@@ -161,34 +274,14 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
     if (docs[i].win) win++; else lose++;
   }
 
-  // users.sort(sortByCount);
-  // var topUsers = users.slice(0, 10);
-  // console.log(users.length, topUsers);
-
   words.sort(sortByCount);  
   var topWords = words.slice(0, 10);
 
   cats.sort(sortByCount);
 
-  // console.log(topWords);
-  // var returningUserCount = 0;
-  // for (var i = 0; i < users.length; i++) {
-  //   if (users[i].count == 2) {
-  //     returningUserCount = i+1;
-  //     break;
-  //   }
-  // }
-
-  // for (var i = 0; i < topUsers.length; i++) {
-  //   topUsers[i].key = i+1;
-  // }
-
   return {
     dateTime: new Date(),
     gameCollection: 'stats',
-    // returningUserCount: returningUserCount,
-    // topUsers: topUsers,
-    // totalUsers: totalUsers + users.length,
     totalUsers: "tba",
     topWords: topWords,
     categories: cats,
