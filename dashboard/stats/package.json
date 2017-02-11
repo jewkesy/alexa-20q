@@ -1,7 +1,7 @@
 {
-  "name": "alexa-20q-dashboard-amazon",
+  "name": "alexa-20q-dashboard-stats",
   "version": "0.0.1",
-  "description": "Dashboard for Alexa-20q amazon",
+  "description": "Dashboard for Alexa-20q stats",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,9 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.1.4",
-    "cheerio": "^0.22.0",
     "mongodb": "^2.2.16",
-    "request": "^2.79.0",
     "tracer": "^0.8.7"
   }
 }
