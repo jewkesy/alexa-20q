@@ -8,14 +8,14 @@ var MongoClient = require('mongodb').MongoClient, assert = require('assert');
 
 const urlUK = "https://www.amazon.co.uk/Daryl-Jewkes-twenty-questions/dp/B01N6I0G8D";
 const urlUS =   "https://www.amazon.com/Daryl-Jewkes-twenty-questions/dp/B01N6I0G8D";
-// var url = process.env.mongoURI;
-var url = process.argv[2];
+var url = process.env.mongoURI;
+// var url = process.argv[2];
 
 exports.handler = function (event, context) {
   getRatings();
 };
 
-getRatings();
+// getRatings();
 
 function getRatings() {
 	async.parallel({
