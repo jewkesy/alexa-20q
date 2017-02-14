@@ -5,14 +5,14 @@ var async = require('async');
 
 var QCollection = "stats";
 var StatsCollection = "summary";
-var USER = process.argv[2];
-var PWD = process.argv[3];
-var MONGODB_URI = process.argv[4];
-var MONGOAPIKEY = process.argv[5];
-// var USER = process.env.mongoUser;
-// var PWD = process.env.mongoPwd;
-// var MONGODB_URI = process.env.mongoURI;
-// var MONGOAPIKEY = process.env.mongoAPIKey;
+// var USER = process.argv[2];
+// var PWD = process.argv[3];
+// var MONGODB_URI = process.argv[4];
+// var MONGOAPIKEY = process.argv[5];
+var USER = process.env.mongoUser;
+var PWD = process.env.mongoPwd;
+var MONGODB_URI = process.env.mongoURI;
+var MONGOAPIKEY = process.env.mongoAPIKey;
 
 var dbs = {
   0: 35069,
@@ -51,21 +51,21 @@ var dbs = {
   x: 45009,
   y: 35069,
   z: 35029
-}
+};
 
 exports.handler = function (event, context) {
   buildStats(function (err, result) {
-    console.log(err, result);
+    // console.log(err, result);
   });
 };
 
-buildStats(function (err, result) {
-  console.log(err, result);
-});
+// buildStats(function (err, result) {
+//   console.log(err, result);
+// });
 
 function buildStats(callback) {
   var urls = buildUrls();
-  urls.push(MONGODB_URI)
+  urls.push(MONGODB_URI);
   // console.log(urls)
 
   var combStats = {};
@@ -103,33 +103,33 @@ function buildStats(callback) {
         var totalGames = 0;
         var startTimeStamp = 0;
 
-        // if (docs.length > 0) {
-        //   if (typeof docs[0].last_id == 'undefined') filter = {};
-        //   else filter = {_id: {$gt: docs[0].last_id}};
+        if (docs.length > 0) {
+          if (typeof docs[0].last_id == 'undefined') filter = {};
+          else filter = {_id: {$gt: docs[0].last_id}};
 
-        //   users = [];
-        //   words = docs[0].topWords;
-        //   cats = docs[0].categories;
-        //   quickest = docs[0].quickest;
-        //   quickestObj = docs[0].quickestObj;
-        //   win = docs[0].wins;
-        //   lose = docs[0].loses;
-        //   end = docs[0].failed;
-        //   totalGames = docs[0].totalGames;
-        //   startTimeStamp = docs[0].startTimeStamp;
-        // }
+          users = [];
+          words = docs[0].topWords;
+          cats = docs[0].categories;
+          quickest = docs[0].quickest;
+          quickestObj = docs[0].quickestObj;
+          win = docs[0].wins;
+          lose = docs[0].loses;
+          end = docs[0].failed;
+          totalGames = docs[0].totalGames;
+          startTimeStamp = docs[0].startTimeStamp;
+        }
 
         findDocuments(db, 'stats', filter, {datetime: 0}, {}, function(docs) {
-          if (docs.length == 0) { console.log(db.databaseName, "no docs, returning"); db.close(); return cb(null);}
-          if (startTimeStamp == 0) startTimeStamp = docs[0].timestamp;
-          console.log(docs.length, db.databaseName);
-          // getStats(docs);
+          if (docs.length === 0) { console.log(db.databaseName, "no docs, returning"); db.close(); return cb(null);}
+          if (startTimeStamp === 0) startTimeStamp = docs[0].timestamp;
+          // console.log(docs.length, db.databaseName);
+
           //  users, words, cats, quickest, quickestObj, win, lose, end)
           var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
 
           combStats[db.databaseName] = summary;
-    return cb(null);
-          updateDocument('summary', db, summary, function (result) {
+        // return cb(null);
+          updateDocument('summary', 'stats', db, summary, function (result) {
             db.close();
             return cb(null);
           });
@@ -140,73 +140,80 @@ function buildStats(callback) {
   }, function (err) {
     if (err) return callback(err);
 
-    var retVal = mergeStats(combStats);
+    var newStats = mergeStats(combStats);
+    // console.log(newStats)
 
-    return callback(null, retVal);    
+    MongoClient.connect(MONGODB_URI, function(err, db) {
+
+      if (err) {console.log(err);  return callback(err)}
+      updateDocument('summary', 'stats', db, newStats, function (result) {
+        if (err) {console.log(err);  return callback(err)}
+        // console.log(result)
+        return callback(null, result);  
+      });
+        
+    });
+    
   });
 }
 
 function mergeStats(arrStats) {
-  var retVal = {};
-// now we have all the stats, merge to master
+  // now we have all the stats, merge to master
 
-    var fullStats = arrStats.twentyquestions;
+  var fullStats = arrStats.twentyquestions;
 
-    console.log(fullStats.wins);
-    console.log(fullStats.loses);
-    console.log(fullStats.failed);
-    console.log(fullStats.totalGames);
+  Object.keys(arrStats).forEach(function(key) {
+    if (key == 'twentyquestions') return;
 
-    Object.keys(arrStats).forEach(function(key) {
-      if (key == 'twentyquestions') return;
+    var x = arrStats[key];
 
-      // console.log(key)
-      var val = arrStats[key];
+    // topWords
+    fullStats.topWords = mergeObjArrs(fullStats.topWords, x.topWords);
+    // categories
+    fullStats.categories = mergeObjArrs(fullStats.categories, x.categories);
+    
+    // quickest
+    // quickestObj
 
-      // topWords
-      // categories
-      // quickest
-      // quickestObj
+    // wins
+    fullStats.wins += x.wins;
+    // loses
+    fullStats.loses += x.loses;
+    // failed
+    fullStats.failed += x.failed;
+    // totalGames
+    fullStats.totalGames += x.totalGames;
 
-      // wins
-      fullStats.wins += val.wins;
-      // loses
-      fullStats.loses += val.loses;
-      // failed
-      fullStats.failed += val.failed;
-      // totalGames
-      fullStats.totalGames += val.totalGames;
-      // avgGameHr
-      // currHour
-      // lastGame
+    // currHour
 
-      // console.log(val)
-    });
-    console.log(fullStats.wins);
-    console.log(fullStats.loses);
-    console.log(fullStats.failed);
-    console.log(fullStats.totalGames);
-    // console.log(fullStats)
+    // lastGame
+    if (fullStats.lastGame.timestamp < x.lastGame.timestamp) {
+      fullStats.lastGame = x.lastGame;
+    }
 
-    fullStats.avgGameHr = getGamesPerHour(fullStats.startTimeStamp, new Date(), fullStats.totalGames);
-
-    // return callback(null, combStats)
-    // return callback(null, null);
-  return retVal;
+  });
+  
+  // avgGameHr
+  fullStats.avgGameHr = getGamesPerHour(fullStats.startTimeStamp, new Date(), fullStats.totalGames);
+  fullStats.dateTime = new Date();
+  return fullStats;
 }
 
+function mergeObjArrs(master, child) {
+  return master;
+}
 
 function buildUrls() {
-  var urls = []
+  var urls = [];
 
   for (var j in dbs) {
       // console.log(j);
       var idx = dbs[j];
 
-      urls.push("mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + j  )
+      urls.push("mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + j  );
   }
 
-  return urls
+  return urls;
 }
 
 var findDocuments = function(db, coll, filter, proj, sort, callback) {
@@ -220,12 +227,12 @@ var findDocuments = function(db, coll, filter, proj, sort, callback) {
   });
 };
 
-var updateDocument = function(coll, db, newDoc, callback) {
+var updateDocument = function(coll, gameCol, db, newDoc, callback) {
   // Get the documents collection
   var collection = db.collection(coll);
   // Update document where a is 2, set b equal to 1
 
-  collection.update({ gameCollection : 'stats' }, newDoc, {upsert: true, multi: false} , function(err, result) {
+  collection.update({ gameCollection : gameCol }, newDoc, {upsert: true, multi: false} , function(err, result) {
     assert.equal(err, null);
     assert.equal(1, result.result.n);
     // console.log("Updated the document", newDoc);
@@ -250,22 +257,22 @@ function getGamesPerHour(startTimeStamp, endTimeStamp, totalGames) {
 
   var hours = Math.abs(startDate - endDate) / 36e5;
   var gPerHr = Math.ceil(totalGames/Math.ceil(hours));
-  return gPerHr
+  return gPerHr;
 }
 
 function processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
 
   var currHour = 0;
-  var nowDate = +new Date;
+  var nowDate = +new Date();
   var ONE_HOUR = 60 * 60 * 1000;
 
   var gPerHr = getGamesPerHour(startTimeStamp, docs[docs.length-1].timestamp, docs.length+totalGames);
   // console.log(startDate, endDate, Math.ceil(hours), gPerHr);
 
   for (var i = 0; i < docs.length; i++) {
-    upsertArray(docs[i].userId, users);
-    upsertArray(docs[i].word, words);
-    upsertArray(docs[i].type, cats)
+    upsertArray(docs[i].userId, users, 1);
+    upsertArray(docs[i].word, words, 1);
+    upsertArray(docs[i].type, cats, 1);
 
     if ((nowDate - docs[i].timestamp) < ONE_HOUR) currHour++;
 
@@ -308,7 +315,7 @@ function processResults(docs, users, totalUsers, words, cats, quickest, quickest
     startTime: "Tue Dec 27 2016 22:38:20 GMT+0000 (UTC)", // docs[0].datetime,
     startTimeStamp: 1482878300965,
     lastGame: docs[docs.length-1]
-  }
+  };
 }
 
 function sortByCount(a,b) {
@@ -319,12 +326,12 @@ function sortByCount(a,b) {
   return 0;
 }
 
-function upsertArray(key, array) {
+function upsertArray(key, array, val) {
   var position = keyExists(key, array);
   if (position > -1) {
-    array[position].count++;
+    array[position].count = array[position].count + val;
   } else {
-    array.push({key: key, count: 1});
+    array.push({key: key, count: val});
   }
 }
 
