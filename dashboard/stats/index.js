@@ -5,14 +5,14 @@ var async = require('async');
 
 var QCollection = "stats";
 var StatsCollection = "summary";
-// var USER = process.argv[2];
-// var PWD = process.argv[3];
-// var MONGODB_URI = process.argv[4];
-// var MONGOAPIKEY = process.argv[5];
-var USER = process.env.mongoUser;
-var PWD = process.env.mongoPwd;
-var MONGODB_URI = process.env.mongoURI;
-var MONGOAPIKEY = process.env.mongoAPIKey;
+var USER = process.argv[2];
+var PWD = process.argv[3];
+var MONGODB_URI = process.argv[4];
+var MONGOAPIKEY = process.argv[5];
+// var USER = process.env.mongoUser;
+// var PWD = process.env.mongoPwd;
+// var MONGODB_URI = process.env.mongoURI;
+// var MONGOAPIKEY = process.env.mongoAPIKey;
 
 var dbs = {
   0: 35069,
@@ -59,9 +59,9 @@ exports.handler = function (event, context) {
   });
 };
 
-// buildStats(function (err, result) {
-//   // console.log('done');
-// });
+buildStats(function (err, result) {
+  console.log(err, result);
+});
 
 function buildStats(callback) {
   var urls = buildUrls();
@@ -72,15 +72,9 @@ function buildStats(callback) {
 
   async.forEachOf(urls, function (value, key, cb) {
 
-    // console.log(value, key)
-
     MongoClient.connect(value, function(err, db) {
 
       if (err) {console.log(err, value);  return callback(err)}
-
-      // console.log("Connected successfully to server", db.databaseName);
-      // var coll = 'summary';
-      // if (db.databaseName == 'twentyquestions') coll = 'summary';
 
       findDocuments(db, 'summary', {}, {}, {}, function(docs) {
         // db.close();
@@ -91,7 +85,6 @@ function buildStats(callback) {
 
         if (db.databaseName == 'twentyquestions') {
           combStats[db.databaseName] = docs[0];
-          // console.log(docs);
           return cb(null);
         }
 
@@ -110,21 +103,21 @@ function buildStats(callback) {
         var totalGames = 0;
         var startTimeStamp = 0;
 
-        if (docs.length > 0) {
-          if (typeof docs[0].last_id == 'undefined') filter = {};
-          else filter = {_id: {$gt: docs[0].last_id}};
+        // if (docs.length > 0) {
+        //   if (typeof docs[0].last_id == 'undefined') filter = {};
+        //   else filter = {_id: {$gt: docs[0].last_id}};
 
-          users = [];
-          words = docs[0].topWords;
-          cats = docs[0].categories;
-          quickest = docs[0].quickest;
-          quickestObj = docs[0].quickestObj;
-          win = docs[0].wins;
-          lose = docs[0].loses;
-          end = docs[0].failed;
-          totalGames = docs[0].totalGames;
-          startTimeStamp = docs[0].startTimeStamp;
-        }
+        //   users = [];
+        //   words = docs[0].topWords;
+        //   cats = docs[0].categories;
+        //   quickest = docs[0].quickest;
+        //   quickestObj = docs[0].quickestObj;
+        //   win = docs[0].wins;
+        //   lose = docs[0].loses;
+        //   end = docs[0].failed;
+        //   totalGames = docs[0].totalGames;
+        //   startTimeStamp = docs[0].startTimeStamp;
+        // }
 
         findDocuments(db, 'stats', filter, {datetime: 0}, {}, function(docs) {
           if (docs.length == 0) { console.log(db.databaseName, "no docs, returning"); db.close(); return cb(null);}
@@ -135,7 +128,7 @@ function buildStats(callback) {
           var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
 
           combStats[db.databaseName] = summary;
-
+    return cb(null);
           updateDocument('summary', db, summary, function (result) {
             db.close();
             return cb(null);
@@ -147,20 +140,28 @@ function buildStats(callback) {
   }, function (err) {
     if (err) return callback(err);
 
-    return callback(null, 'TODO: Merge stuff');
+    var retVal = mergeStats(combStats);
 
+    return callback(null, retVal);    
+  });
+}
 
+function mergeStats(arrStats) {
+  var retVal = {};
+// now we have all the stats, merge to master
 
-    // now we have all the stats, merge to master
+    var fullStats = arrStats.twentyquestions;
 
-    var fullStats = combStats.twentyquestions;
+    console.log(fullStats.wins);
+    console.log(fullStats.loses);
+    console.log(fullStats.failed);
     console.log(fullStats.totalGames);
 
-    Object.keys(combStats).forEach(function(key) {
+    Object.keys(arrStats).forEach(function(key) {
       if (key == 'twentyquestions') return;
 
       // console.log(key)
-      var val = combStats[key];
+      var val = arrStats[key];
 
       // topWords
       // categories
@@ -181,11 +182,19 @@ function buildStats(callback) {
 
       // console.log(val)
     });
+    console.log(fullStats.wins);
+    console.log(fullStats.loses);
+    console.log(fullStats.failed);
+    console.log(fullStats.totalGames);
+    // console.log(fullStats)
+
+    fullStats.avgGameHr = getGamesPerHour(fullStats.startTimeStamp, new Date(), fullStats.totalGames);
 
     // return callback(null, combStats)
-    return callback(null, null);
-  });
+    // return callback(null, null);
+  return retVal;
 }
+
 
 function buildUrls() {
   var urls = []
@@ -235,18 +244,22 @@ var indexCollection = function(db, callback) {
   );
 };
 
+function getGamesPerHour(startTimeStamp, endTimeStamp, totalGames) {
+  var startDate = new Date(startTimeStamp);
+  var endDate = new Date(endTimeStamp);
+
+  var hours = Math.abs(startDate - endDate) / 36e5;
+  var gPerHr = Math.ceil(totalGames/Math.ceil(hours));
+  return gPerHr
+}
+
 function processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp) {
 
   var currHour = 0;
-
   var nowDate = +new Date;
   var ONE_HOUR = 60 * 60 * 1000;
 
-  var startDate = new Date(startTimeStamp);
-  var endDate = new Date(docs[docs.length-1].timestamp);
-
-  var hours = Math.abs(startDate - endDate) / 36e5;
-  var gPerHr = Math.ceil((docs.length+totalGames)/Math.ceil(hours));
+  var gPerHr = getGamesPerHour(startTimeStamp, docs[docs.length-1].timestamp, docs.length+totalGames);
   // console.log(startDate, endDate, Math.ceil(hours), gPerHr);
 
   for (var i = 0; i < docs.length; i++) {
