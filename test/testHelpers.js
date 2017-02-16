@@ -127,10 +127,21 @@ describe("src/helpers.js", function () {
     });
 
     describe("handleSpeechQuerks: function (speech) {}", function () {
-        it("", function () {});
+        it("removes the question mark for known speech querks", function () {
+            var input = "Does it growl?";
+            var expected = "Does it growl";
+            var retVal = helpers.handleSpeechQuerks(input);
+            assert.equal(retVal, expected);
+        });
+        it("leaves the question mark for unknown speech querks", function () {
+            var input = "Is Alexa awesome?";
+            var expected = "Is Alexa awesome?";
+            var retVal = helpers.handleSpeechQuerks(input);
+            assert.equal(retVal, input);
+        });
     });
 
-    describe("getQuestionNo: function (text) {}", function () {
+    xdescribe("getQuestionNo: function (text) {}", function () {
         it("", function () {});
     });
 
@@ -181,16 +192,3 @@ describe("src/helpers.js", function () {
 // console.log(getGuessText("Question 17.  I am guessing that it is an ant eater?"), getQuestionNo("Question 17.  I am guessing that it is an ant eater?"));
 // console.log(getGuessText("Question 30.  I am guessing that it is an armadillo?"), getQuestionNo("Question 30.  I am guessing that it is an armadillo?"));
 // // console.log(getGuessText(""));
-
-// function handleSpeechQuerks(speech) {
-//     if (speech.indexOf("Does it growl?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Does it roll?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Does it have four legs?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Is it round?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Can you lift it?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Can it help you find your way?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Does it cry?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
-//     else if (speech.indexOf("Is it tall?") > -1) return speech.substring(0, speech.length - 1);
-//     return speech;
-// }
