@@ -83,7 +83,7 @@ function buildStats(callback) {
           console.log('mongodb find err', err);
           return cb(err);
         }
-        console.log(db.databaseName, docs.length)
+        // console.log(db.databaseName, docs.length)
         if (docs.length > 0) combStats[db.databaseName] = docs[0];
         if (db.databaseName == 'twentyquestions') {
           combStats[db.databaseName+'_combined'] = docs[1];
@@ -124,12 +124,12 @@ function buildStats(callback) {
         findDocuments(db, 'stats', filter, {datetime: 0}, {}, function(docs) {
           if (docs.length === 0) {
             // combStats[db.databaseName] = summary;
-            console.log(db.databaseName, "no docs, returning");
+            // console.log(db.databaseName, "no docs, returning");
             db.close();
             return cb(null);
           }
           if (startTimeStamp === 0) startTimeStamp = docs[0].timestamp;
-          console.log(docs.length, db.databaseName);
+          // console.log(docs.length, db.databaseName);
 
           //  users, words, cats, quickest, quickestObj, win, lose, end)
           var summary = processResults(docs, users, totalUsers, words, cats, quickest, quickestObj, win, lose, end, totalGames, startTimeStamp);
@@ -150,8 +150,8 @@ function buildStats(callback) {
     if (err) return callback(err);
     // return callback(null, 'early exit');
     var newStats = mergeStats(combStats);
-    console.log(newStats)
-    console.log('updating combined db')
+    // console.log(newStats)
+    // console.log('updating combined db')
     MongoClient.connect(MONGODB_URI, function(err, db) {
 
       if (err) {console.log(err);  return callback(err)}
@@ -176,10 +176,10 @@ function mergeStats(arrStats) {
   // // fullStats._id = arrStats.twentyquestions_combined._id;
   fullStats.gameCollection = 'combined_stats';
 
-  // console.log(fullStats.wins, fullStats.loses, fullStats.failed, fullStats.totalGames);
+  console.log(fullStats.wins, fullStats.loses, fullStats.failed, fullStats.totalGames);
 // console.log(arrStats)
   Object.keys(arrStats).forEach(function(key) {
-    console.log(key)
+    // console.log(key)
     if (key == 'twentyquestions' || key == 'twentyquestions_combined') return;
 
     var x = arrStats[key];
@@ -212,6 +212,7 @@ function mergeStats(arrStats) {
   // avgGameHr
   fullStats.avgGameHr = getGamesPerHour(fullStats.startTimeStamp, new Date(), fullStats.totalGames);
   fullStats.dateTime = new Date();
+  console.log(fullStats.wins, fullStats.loses, fullStats.failed, fullStats.totalGames);
   return fullStats;
 }
 
