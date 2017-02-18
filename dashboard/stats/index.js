@@ -150,6 +150,7 @@ function buildStats(callback) {
     if (err) return callback(err);
     // return callback(null, 'early exit');
     var newStats = mergeStats(combStats);
+    // return callback(null, 'early exit');
     // console.log(newStats)
     // console.log('updating combined db')
     MongoClient.connect(MONGODB_URI, function(err, db) {
@@ -177,7 +178,7 @@ function mergeStats(arrStats) {
   fullStats.gameCollection = 'combined_stats';
 
   console.log(fullStats.wins, fullStats.loses, fullStats.failed, fullStats.totalGames);
-// console.log(arrStats)
+
   Object.keys(arrStats).forEach(function(key) {
     // console.log(key)
     if (key == 'twentyquestions' || key == 'twentyquestions_combined') return;
@@ -217,6 +218,10 @@ function mergeStats(arrStats) {
 }
 
 function mergeObjArrs(master, child) {
+  // for each child obj, push to master
+  for(var i = 0, len = child.length; i < len; i++) {
+    upsertArray(child[ i ].key, master, child[ i ].count);
+  }
   return master;
 }
 
