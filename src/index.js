@@ -471,52 +471,26 @@ function startGame(userId, callback) {
                   repromptText: listtext + "?",
                   shouldEndSession: false
                 }
-
                 return cb(null, retVal);
-                // return cb(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
             });
         });
       },
       getStats: function (cb) {
-        var intro = helpers.getStartGamePhrase();
-
         var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0,"word":0}';
-        // console.log(url, userId)
+
         request(url, function(err, response){
       		var playr = JSON.parse(response.body);
-          // console.log(playr);
+          var intro = helpers.getStartGamePhrase(playr);
           var retVal = {
             intro: intro,
             player: playr
           }
           return cb(null, retVal);
         });
-        // var json = {
-        //     'userId': userId,
-        //     'word': word,
-        //     'num': num,
-        //     'win': win,
-        //     'type': type,
-        //     'timestamp': +new Date,
-        //     'datetime': new Date().toLocaleString()};
-        //
-        // request.post({
-        //   headers: {'content-type' : 'application/json'},
-        //   url:     url,
-        //   body:    JSON.stringify(json)
-        // }, function(err, response, body) {
-        //   return cb(err, url)
-        // });
-
-
-
       }
     }, function(err, results) {
       console.log(results);
       return callback(sessionAttributes, buildSpeechletResponse(results.get20q.title, results.getStats.intro + results.get20q.sayText, results.get20q.repromptText, results.get20q.shouldEndSession, results.get20q.cardText));
-
-
-      // return callback(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
     });
 }
 

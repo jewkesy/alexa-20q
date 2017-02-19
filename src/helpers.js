@@ -8,8 +8,8 @@ const startGamePhrases = ['I will read your mind', 'Prepare to be amazed', 'I lo
 const farewellPhrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community", "Please visit www.daryljewkes.com to see my win vs lose ratio"];
 
 module.exports = {
-	getStartGamePhrase: function () {
-		return getStartGamePhrase();
+	getStartGamePhrase: function (playr) {
+		return getStartGamePhrase(playr);
 	},
 	getFarewellPhrase: function () {
 		return getFarewellPhrase();
@@ -41,7 +41,55 @@ module.exports = {
 	}
 }
 
-function getStartGamePhrase() {
+function getStartGamePhrase(player) {
+	// console.log(player)
+
+	// if new player
+	if (player.length === 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+
+	var lastGame = player[player.length-1];
+
+	// pick a random welcome
+	var rnd = randomInt(0, 5);
+	console.log(rnd)
+
+	//default
+	if (rnd == 0) {
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// how long since last game
+	if (rnd == 1) {
+		var daysAgo = daydiff(new Date(lastGame.timestamp), new Date());
+		// console.log(daysAgo)
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// who won last game
+	if (rnd == 2) {
+		if (lastGame.won == true) {
+
+		} else {
+
+		}
+	}
+
+	// fav category
+	if (rnd == 3) {
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// fastest wins
+	if (rnd == 4) {
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// win vs lose
+	if (rnd == 5) {
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// fall thru
 	return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 }
 
@@ -139,4 +187,8 @@ function randomInt(low, high) {
 
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function daydiff(first, second) {
+    return Math.round((second-first)/(1000*60*60*24));
 }

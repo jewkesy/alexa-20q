@@ -4,7 +4,7 @@ var assert = require('chai').assert;
 var helpers = require('./../src/helpers.js');
 var console = require('tracer').colorConsole();
 
-// getStartGamePhrase: function () {}
+// getStartGamePhrase: function (player) {}
 // getFarewellPhrase: function () {}
 // getWinPhrase: function () {}
 // getLostPhrase: function () {}
@@ -40,7 +40,7 @@ const questions = [
 
 const summary = {
  totalUsers: 'tba',
-  topWords: 
+  topWords:
    [ { key: 'a carrot', count: 602 },
      { key: 'an elephant', count: 524 },
      { key: 'a giraffe', count: 430 },
@@ -51,7 +51,7 @@ const summary = {
      { key: 'a television set', count: 176 },
      { key: 'a tiger', count: 171 },
      { key: 'a cell-phone', count: 164 } ],
-  categories: 
+  categories:
    [ { key: 'Other', count: 13948 },
      { key: 'Animal', count: 13678 },
      { key: 'Vegetable', count: 3678 },
@@ -72,17 +72,68 @@ const summary = {
   loses: 16095,
   failed: 5990,
   totalGames: 35430,
-  avgGameHr: 124}
+  avgGameHr: 124
+}
+
+var player = [
+  { "num":99, "win": false, "type": "splitDb.js", "timestamp": 1486675626844},
+  { "num":30, "win": false, "type": "Animal", "timestamp": 1487104127415},
+  { "num":17, "win": true, "type": "Animal", "timestamp": 1487514621848},
+  { "num":19, "win": true, "type": "Animal", "timestamp": 1487514720865} ]
 
 describe("src/helpers.js", function () {
     describe("get phrases", function () {
-        describe("getStartGamePhrase: function () {}", function () {
+        describe("getStartGamePhrase: function (player) {}", function () {
+            it("gets a start phrase for new player", function () {
+                var retVal = helpers.getStartGamePhrase([]);
+                assert.notEqual(retVal, "");
+            });
+
+            it("Detects when last played was yesterday and you won", function () {
+
+              var today = new Date();
+              var yesterday = new Date(today);
+              yesterday.setDate(today.getDate() - 1);
+
+              var yesterdayTS = yesterday.getTime();
+              var p = JSON.parse(JSON.stringify(player));
+              p.push({
+                num: 10,
+                win: true,
+                type: 'Other',
+                timestamp: yesterdayTS
+              })
+                var retVal = helpers.getStartGamePhrase(p);
+                assert.notEqual(retVal, "");
+            });
+
+            it("Detects when last played was yesterday and you lost", function () {
+
+              var today = new Date();
+              var yesterday = new Date(today);
+              yesterday.setDate(today.getDate() - 1);
+
+              var yesterdayTS = yesterday.getTime();
+              var p = JSON.parse(JSON.stringify(player));
+              p.push({
+                num: 26,
+                win: false,
+                type: 'Other',
+                timestamp: yesterdayTS
+              })
+                var retVal = helpers.getStartGamePhrase(p);
+                assert.notEqual(retVal, "");
+            });
+
+
+
+
             it("gets a start phrase", function () {
-                var retVal = helpers.getStartGamePhrase();
+                var retVal = helpers.getStartGamePhrase(player);
                 assert.notEqual(retVal, "");
             });
             it("it has a full stop and a space at the end", function () {
-                var retVal = helpers.getStartGamePhrase().slice(-2);
+                var retVal = helpers.getStartGamePhrase(player).slice(-2);
                 assert.equal(retVal, ". ");
             });
         });
@@ -120,7 +171,7 @@ describe("src/helpers.js", function () {
             });
         });
     });
-    
+
     describe("buildNaturalLangList: function (items, finalWord) {}", function () {
         it("that 'or' precedes the penultimate word", function () {});
         it("that words are comma separated, apart from the last word", function () {});
