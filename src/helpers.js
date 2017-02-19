@@ -62,25 +62,46 @@ function getStartGamePhrase(player) {
 	if (rnd == 1) {
 		var daysAgo = daydiff(new Date(lastGame.timestamp), new Date());
 		// console.log(daysAgo)
+
+		// less than 3
+
+		// over a week
+
+		// over a fortnight
+
+		// over a month
+
+
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
 	// who won last game
 	if (rnd == 2) {
 		if (lastGame.won == true) {
+			// praise
 
+			// insult
 		} else {
+			// praise
 
+			// insult
 		}
 	}
 
-	// fav category
+	// category
 	if (rnd == 3) {
+		// fav cat
+
+		// least fav cat 
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
-	// fastest wins
+	// rate score
 	if (rnd == 4) {
+		// best score
+
+		// avg score
+
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
