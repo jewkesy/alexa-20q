@@ -104,7 +104,7 @@ function onLaunch(launchRequest, session, callback) {
     startGame(callback);
 }
 
-/** 
+/**
  * Called when the user specifies an intent for this application.
  */
 function onIntent(intentRequest, session, callback) {
@@ -141,7 +141,7 @@ function onIntent(intentRequest, session, callback) {
                     return processAnswer('Unknown', session, callback);
                 case "RepeatIntent":
                     return repeatQuestion(intentName, session, callback);
-                default: 
+                default:
                     return invalidAnswer(intentName, session, callback);
             }
 
@@ -185,7 +185,7 @@ function onIntent(intentRequest, session, callback) {
                     return processAnswer('Nearly', session, callback);
                 case "RepeatIntent":
                     return repeatQuestion(intentName, session, callback);
-                default: 
+                default:
                     return invalidAnswer(intentName, session, callback);
             }
         }
@@ -250,7 +250,7 @@ function stop(intent, session, callback) {
 function repeatQuestion(intent, session, callback) {
     var sessionAttributes = session.attributes;
     callback(sessionAttributes,
-        buildSpeechletResponse("Question " + sessionAttributes.questionNum, sessionAttributes.questionText, 
+        buildSpeechletResponse("Question " + sessionAttributes.questionNum, sessionAttributes.questionText,
             sessionAttributes.questionText + "\nIf you are unsure, you can say 'I don't know.'",  false));
 }
 
@@ -264,7 +264,7 @@ function invalidAnswer(intent, session, callback) {
     var sessionAttributes = session.attributes;
     sessionAttributes.intent = intent;
     var optionlist = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-   
+
     // repeattext = "<p>You can say " + optionlist + "</p>";
     var questiontext = "Sorry, that was not a valid answer.\n";
 
@@ -321,7 +321,7 @@ function askNextQuestion(uri, answer, session, callback) {
         if (err) {
             console.log("Error requesting " + uri, err);
             return callback(sessionAttributes,
-                buildSpeechletResponse("App Error", "There was an error accessing the 20q website. Try repeating your answer.", 
+                buildSpeechletResponse("App Error", "There was an error accessing the 20q website. Try repeating your answer.",
                     "There was an error accessing the 20q websites. Try repeating your answer.", false));
         }
 
@@ -331,7 +331,7 @@ function askNextQuestion(uri, answer, session, callback) {
         } catch (e) {
             console.log("Exception when trying to parse html with Cheerio.", e, html);
             return callback(sessionAttributes,
-                buildSpeechletResponse("App Error", "There was an error with the 20q website. Try repeating your question.", 
+                buildSpeechletResponse("App Error", "There was an error with the 20q website. Try repeating your question.",
                     "There was an error with the 20q website. Try repeating your question.", false));
         }
 
@@ -390,15 +390,15 @@ function askNextQuestion(uri, answer, session, callback) {
             sessionAttributes.questionType = 'question';
             sessionAttributes.questionNum = helpers.getQuestionNo(question);
             sessionAttributes.questionText = question;
-            
+
             callback(sessionAttributes,
-                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question, 
+                buildSpeechletResponse("Question " + sessionAttributes.questionNum, question,
                     question + "\nIf you are unsure, you can say 'I don't know.'",  false));
         }
     });
 }
 
-/** 
+/**
  * Start a new game
  */
 
@@ -412,12 +412,12 @@ function startGame(callback) {
             'Referer': TWENTY_QUESTIONS_HOME_URL + '/play.html'
         }
     };
-    
+
     request(reqoptions, function(err, response, html){
         if(err) {
             var msg =  "There was an error accessing the twenty questions website. ";
-            
-            if (err.code === 'ETIMEDOUT') { msg += " Please try again in a few moments. "; } 
+
+            if (err.code === 'ETIMEDOUT') { msg += " Please try again in a few moments. "; }
             console.log(msg, err);
             return callback(sessionAttributes, buildSpeechletResponse("App Error - " + err, msg, msg, true));
         }
@@ -445,7 +445,6 @@ function startGame(callback) {
             for(var i = 0; i < optionelements.length; i++) {
                 var optionname = $(optionelements[i]).text();
                 var optionURI = $(optionelements[i]).attr('href');
-
                 sessionAttributes.options[optionname] = optionURI;
             }
 
@@ -469,7 +468,6 @@ function getMongoURIForUser(userId) {
     char = char.substr(0,1).toLowerCase();
     var idx = dbs[char];
     var retVal = "mongodb://" + USER +  ":" + PWD + "@ds1" + idx + ".mlab.com:" + idx + "/twentyquestions_" + char;
-    // console.log(retVal);
     return retVal;
 }
 
@@ -484,40 +482,34 @@ function getMongoURLForUser(userId) {
 function writeToMongoUsingHttp(userId, word, num, type, win, callback) {
   if (SAVE_TO_DB == 'false') return callback(null, {});
 
-    async.parallel({
-      save: function(cb) {
+  async.parallel({
+    save: function(cb) {
+        var url = getMongoURLForUser(userId);
+        var json = {
+            'userId': userId,
+            'word': word,
+            'num': num,
+            'win': win,
+            'type': type,
+            'timestamp': +new Date,
+            'datetime': new Date().toLocaleString()};
 
-          var url = getMongoURLForUser(userId);
-
-          var json = {
-              'userId': userId,
-              'word': word,
-              'num': num,
-              'win': win,
-              'type': type,
-              'timestamp': +new Date,
-              'datetime': new Date().toLocaleString()};
-
-          request.post({
-            headers: {'content-type' : 'application/json'},
-            url:     url,
-            body:    JSON.stringify(json)
-          }, function(err, response, body){
-            // console.log('done 1')
-            return cb(err, url)
-          });
-
-      },
-      stats: function(cb) {
-
-        request.get({
-            headers: {'content-type' : 'application/json'},
-            url:     "https://api.mongolab.com/api/1/databases/twentyquestions/collections/summary?apiKey=" + MONGOAPIKEY
-          }, function(err, response, body){
-            // console.log('done 2')
-            return cb(err, JSON.parse(body))
-          });
-      }
+        request.post({
+          headers: {'content-type' : 'application/json'},
+          url:     url,
+          body:    JSON.stringify(json)
+        }, function(err, response, body) {
+          return cb(err, url)
+        });
+    },
+    stats: function(cb) {
+      request.get({
+        headers: {'content-type':'application/json'},
+        url:     'https://api.mongolab.com/api/1/databases/twentyquestions/collections/summary?q={"gameCollection":"combined_stats"}&apiKey=' + MONGOAPIKEY
+      }, function(err, response, body){
+        return cb(err, JSON.parse(body))
+      });
+    }
   }, function(err, results) {
     return callback(err, results.stats[0]);
   });

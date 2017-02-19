@@ -61,7 +61,7 @@ function handleSpeechQuerks(speech) {
     var querks = ["Does it growl?", "Does it roll?", "Does it have four legs?",     +
         "Is it round?", "Can you lift it?", "Can it help you find your way?",       +
         "Does it cry?", "Can it growl?", "Is it tall?", "Is it used by the police?" +
-        "Does it purr?", "Does it get wet?"];
+        "Does it purr?", "Does it get wet?", "Does it have lots of seeds?"];
 
     if (querks.indexOf(speech) > -1) return speech.substring(0, speech.length - 1);
     return speech;
