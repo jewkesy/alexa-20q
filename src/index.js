@@ -101,7 +101,7 @@ function onSessionStarted(sessionStartedRequest, session) {
  */
 function onLaunch(launchRequest, session, callback) {
     // console.log("onLaunch requestId=" + launchRequest.requestId + ", sessionId=" + session.sessionId);
-    startGame(callback);
+    startGame(session.user.userId, callback);
 }
 
 /**
@@ -191,7 +191,7 @@ function onIntent(intentRequest, session, callback) {
         }
 
     } else {
-        startGame(callback);
+        startGame(session.user.userId, callback);
     }
 }
 
@@ -402,7 +402,7 @@ function askNextQuestion(uri, answer, session, callback) {
  * Start a new game
  */
 
-function startGame(callback) {
+function startGame(userId, callback) {
     var sessionAttributes = {};
 
     var reqoptions = {
@@ -413,53 +413,110 @@ function startGame(callback) {
         }
     };
 
-    request(reqoptions, function(err, response, html){
-        if(err) {
-            var msg =  "There was an error accessing the twenty questions website. ";
+    async.parallel({
+      get20q: function (cb) {
+        request(reqoptions, function(err, response, html){
+            if(err) {
+                var msg =  "There was an error accessing the twenty questions website. ";
 
-            if (err.code === 'ETIMEDOUT') { msg += " Please try again in a few moments. "; }
-            console.log(msg, err);
-            return callback(sessionAttributes, buildSpeechletResponse("App Error - " + err, msg, msg, true));
-        }
-
-        var $ = cheerio.load(html);
-        var newgameuri = $('form').first().attr('action');
-
-        var reqoptions = {
-            url: TWENTY_QUESTIONS_DATA_URL + newgameuri,
-            headers: {
-                'Referer': TWENTY_QUESTIONS_DATA_URL + lang   // http://www.20q.net/gsq-enUK   or '/gsq-en' for US
-            },
-            form: {
-                'age': '',
-                'cctkr': regions,
-                'submit': 'Play'
+                if (err.code === 'ETIMEDOUT') { msg += " Please try again in a few moments. "; }
+                console.log(msg, err);
+                var retVal = {
+                  title: "App Error - " + err,
+                  sayText: msg,
+                  repromptText: msg,
+                  shouldEndSession: true
+                }
+                return cb(null, retVal);
+                // return cb(sessionAttributes, buildSpeechletResponse("App Error - " + err, msg, msg, true));
             }
-        };
 
-        request.post(reqoptions, function(err, response, html) {
             var $ = cheerio.load(html);
-            var optionelements = $('big nobr a');
+            var newgameuri = $('form').first().attr('action');
 
-            sessionAttributes.options = {};
-            for(var i = 0; i < optionelements.length; i++) {
-                var optionname = $(optionelements[i]).text();
-                var optionURI = $(optionelements[i]).attr('href');
-                sessionAttributes.options[optionname] = optionURI;
-            }
+            var reqoptions = {
+                url: TWENTY_QUESTIONS_DATA_URL + newgameuri,
+                headers: {
+                    'Referer': TWENTY_QUESTIONS_DATA_URL + lang   // http://www.20q.net/gsq-enUK   or '/gsq-en' for US
+                },
+                form: {
+                    'age': '',
+                    'cctkr': regions,
+                    'submit': 'Play'
+                }
+            };
 
-            var listtext = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
-            var intro = helpers.getStartGamePhrase();
+            request.post(reqoptions, function(err, response, html) {
+                var $ = cheerio.load(html);
+                var optionelements = $('big nobr a');
 
-            sessionAttributes.questionType = 'first';
-            sessionAttributes.questionNum = 1;
-            sessionAttributes.questionText = listtext + "?";
-            sessionAttributes.history = "\nQ1.  " + listtext + "? ";
+                sessionAttributes.options = {};
+                for(var i = 0; i < optionelements.length; i++) {
+                    var optionname = $(optionelements[i]).text();
+                    var optionURI = $(optionelements[i]).attr('href');
+                    sessionAttributes.options[optionname] = optionURI;
+                }
 
-            var cardText = '\nQuestion 1. ' + listtext + '?';
+                var listtext = helpers.buildNaturalLangList(Object.keys(sessionAttributes.options), 'or');
 
-            callback(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
+                sessionAttributes.questionType = 'first';
+                sessionAttributes.questionNum = 1;
+                sessionAttributes.questionText = listtext + "?";
+                sessionAttributes.history = "\nQ1.  " + listtext + "? ";
+
+                var retVal = {
+                  cardText: '\nQuestion 1. ' + listtext + '?',
+                  title: "New Game",
+                  sayText: "<p>Question 1. " + listtext + "?</p>",
+                  repromptText: listtext + "?",
+                  shouldEndSession: false
+                }
+
+                return cb(null, retVal);
+                // return cb(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
+            });
         });
+      },
+      getStats: function (cb) {
+        var intro = helpers.getStartGamePhrase();
+
+        var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0,"word":0}';
+        // console.log(url, userId)
+        request(url, function(err, response){
+      		var playr = JSON.parse(response.body);
+          // console.log(playr);
+          var retVal = {
+            intro: intro,
+            player: playr
+          }
+          return cb(null, retVal);
+        });
+        // var json = {
+        //     'userId': userId,
+        //     'word': word,
+        //     'num': num,
+        //     'win': win,
+        //     'type': type,
+        //     'timestamp': +new Date,
+        //     'datetime': new Date().toLocaleString()};
+        //
+        // request.post({
+        //   headers: {'content-type' : 'application/json'},
+        //   url:     url,
+        //   body:    JSON.stringify(json)
+        // }, function(err, response, body) {
+        //   return cb(err, url)
+        // });
+
+
+
+      }
+    }, function(err, results) {
+      console.log(results);
+      return callback(sessionAttributes, buildSpeechletResponse(results.get20q.title, results.getStats.intro + results.get20q.sayText, results.get20q.repromptText, results.get20q.shouldEndSession, results.get20q.cardText));
+
+
+      // return callback(sessionAttributes, buildSpeechletResponse("New Game", intro + "<p>Question 1. " + listtext + "?</p>", listtext + "?", false, cardText));
     });
 }
 
@@ -512,56 +569,5 @@ function writeToMongoUsingHttp(userId, word, num, type, win, callback) {
     }
   }, function(err, results) {
     return callback(err, results.stats[0]);
-  });
-}
-
-function writeToMongoUsingClient(userId, word, num, type, win, callback) {
-  if (SAVE_TO_DB == 'false') return callback(null, {});
-
-  async.parallel({
-      save: function(cb) {
-          MongoClient.connect(getMongoURIForUser(userId), function(err, db) {
-            if (err) {
-              console.log('mongodb conn err save', err);
-              return cb(err);
-            }
-            var collection = db.collection('stats');
-            collection.insertOne({
-              'userId': userId,
-              'word': word,
-              'num': num,
-              'win': win,
-              'type': type,
-              'timestamp': +new Date,
-              'datetime': new Date().toLocaleString()}, function(err, result) {
-                db.close();
-                if (err) {
-                    console.log('mongodb save err', err);
-                    return cb(err);
-                }
-                return cb(null, result);
-            });
-          });
-      },
-      stats: function(cb) {
-        MongoClient.connect(MONGODB_URI, function(err, db) {
-          if (err) {
-              console.log('mongodb conn err stats', err);
-              return cb(err);
-          }
-          var summary = db.collection('summary');
-          summary.findOne({}, function (err, item) {
-            db.close();
-            if (err) {
-              console.log('mongodb find err', err);
-              return cb(err);
-            }
-
-            return cb(null, item);
-          });
-        });
-      }
-  }, function(err, results) {
-    return callback(err, results.stats);
   });
 }

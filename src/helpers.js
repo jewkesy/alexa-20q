@@ -65,20 +65,6 @@ function handleSpeechQuerks(speech) {
 
     if (querks.indexOf(speech) > -1) return speech.substring(0, speech.length - 1);
     return speech;
-
-    //      if (speech.indexOf("Does it growl?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Does it roll?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Does it have four legs?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Is it round?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Can you lift it?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Can it help you find your way?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Does it cry?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Can it growl?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Is it tall?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Is it used by the police?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Does it purr?") > -1) return speech.substring(0, speech.length - 1);
-    // else if (speech.indexOf("Does it get wet?") > -1) return speech.substring(0, speech.length - 1);
-    // return speech;
 }
 
 function getQuestionNo(text) {
