@@ -6,6 +6,7 @@ const winPhrases  = ["Yay", "Woo hoo", "Told ya", "That was easy", "Good choice"
 const losePhrases = ["You got me", "Couldn't get that one", "Good choice", "That was tough", "Well done", "You beat me", "That was tricky", "Whatevas", "Fine", "Gutted", "Fair play", "Doh", "Booo", "Nice one", "If I had hands, I'd clap"];
 const startGamePhrases = ['I will read your mind', 'Prepare to be amazed', 'I love this game', 'Lets play', 'Lets go', 'Ok', '20 Questions? I\'ll only need 10', 'Lets do this', '20 Questions? My fastest is 8', 'Prepare to lose'];
 const farewellPhrases = ["Please visit www.daryljewkes.com to see live game statistics from the Alexa community", "Please visit www.daryljewkes.com to see the top objects guessed correctly from the Alexa community", "Please visit www.daryljewkes.com to see my win vs lose ratio"];
+const querks = ["Does it growl?", "Does it roll?", "Does it have four legs?", "Is it round?", "Can you lift it?", "Can it help you find your way?", "Does it cry?", "Can it growl?", "Is it tall?", "Is it used by the police?", "Does it purr?", "Does it get wet?", "Does it have lots of seeds?"];
 
 module.exports = {
 	getStartGamePhrase: function (playr) {
@@ -53,10 +54,8 @@ function getStartGamePhrase(player) {
 	var rnd = randomInt(0, 5);
 	// console.log(rnd)
 
-	//default
-	if (rnd == 0) {
-		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
-	}
+	// default
+	if (rnd == 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 
 	// how long since last game
 	if (rnd == 1) {
@@ -78,35 +77,53 @@ function getStartGamePhrase(player) {
 	// who won last game
 	if (rnd == 2) {
 		if (lastGame.won == true) {
-			// praise
+			if (randomInt(0, 1) == 0) { 	// praise
+				"You beat me last time, good .";
+			} else { 	// insult
 
-			// insult
+			}
 		} else {
-			// praise
+			if (randomInt(0, 1) == 0) { 	// praise
 
-			// insult
+			} else { 	// insult
+
+			}
 		}
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
 	// category
 	if (rnd == 3) {
-		// fav cat
-
-		// least fav cat
+		if (randomInt(0, 1) == 0) {
+			// fav cat
+		} else {
+			// least fav cat
+		}
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
 	// rate score
 	if (rnd == 4) {
-		// best score
-
-		// avg score
-
+		if (randomInt(0, 1) == 0) {
+			// best score
+		} else {
+			// avg score
+		}
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
 	// win vs lose
 	if (rnd == 5) {
+		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	}
+
+	// win or lose streak
+	if (rnd == 6) {
+		if (randomInt(0, 1) == 0) {
+			// win streak
+		} else {
+			// lose streak
+		}
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
@@ -127,11 +144,6 @@ function getLostPhrase() {
 }
 
 function handleSpeechQuerks(speech) {
-    var querks = ["Does it growl?", "Does it roll?", "Does it have four legs?",     +
-        "Is it round?", "Can you lift it?", "Can it help you find your way?",       +
-        "Does it cry?", "Can it growl?", "Is it tall?", "Is it used by the police?" +
-        "Does it purr?", "Does it get wet?", "Does it have lots of seeds?"];
-
     if (querks.indexOf(speech) > -1) return speech.substring(0, speech.length - 1);
     return speech;
 }
