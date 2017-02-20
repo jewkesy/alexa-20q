@@ -42,7 +42,7 @@ module.exports = {
 }
 
 function getStartGamePhrase(player) {
-	// console.log(player)
+	console.log(player)
 
 	// if new player
 	if (player.length === 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
@@ -51,7 +51,7 @@ function getStartGamePhrase(player) {
 
 	// pick a random welcome
 	var rnd = randomInt(0, 5);
-	console.log(rnd)
+	// console.log(rnd)
 
 	//default
 	if (rnd == 0) {
@@ -92,7 +92,7 @@ function getStartGamePhrase(player) {
 	if (rnd == 3) {
 		// fav cat
 
-		// least fav cat 
+		// least fav cat
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 

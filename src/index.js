@@ -475,22 +475,28 @@ function startGame(userId, callback) {
             });
         });
       },
+      getStatsFromMaster: function (cb) {
+        var url = "https://api.mlab.com/api/1/databases/twentyquestions/collections/stats?apiKey=" + MONGOAPIKEY + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0}';
+        // console.log(url);
+        request(url, function(err, response){
+          var playr = JSON.parse(response.body);
+          return cb(null, playr);
+        });
+      },
       getStats: function (cb) {
-        var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0,"word":0}';
+        var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0}';
 
         request(url, function(err, response){
       		var playr = JSON.parse(response.body);
-          var intro = helpers.getStartGamePhrase(playr);
-          var retVal = {
-            intro: intro,
-            player: playr
-          }
-          return cb(null, retVal);
+          return cb(null, playr);
         });
       }
     }, function(err, results) {
-      console.log(results);
-      return callback(sessionAttributes, buildSpeechletResponse(results.get20q.title, results.getStats.intro + results.get20q.sayText, results.get20q.repromptText, results.get20q.shouldEndSession, results.get20q.cardText));
+      // console.log(results);
+      var combPlyr = results.getStatsFromMaster.concat(results.getStats);
+      var intro = helpers.getStartGamePhrase(combPlyr);
+
+      return callback(sessionAttributes, buildSpeechletResponse(results.get20q.title, intro + results.get20q.sayText, results.get20q.repromptText, results.get20q.shouldEndSession, results.get20q.cardText));
     });
 }
 
