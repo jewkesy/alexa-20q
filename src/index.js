@@ -413,6 +413,10 @@ function startGame(userId, callback) {
         }
     };
 
+    // userId = "amzn1.ask.account.AHEKZ4WEB6BPP24WR6WHL43LXKF7PMBLOP4L2AI5KBSO3YJTMXZ6OYG5RVQ3AIG2MMPDU76CKBMNM6CCTROX5Z7XOFVWS77LKY4TY2BLBUBLNIJ2SM6SRU53MCIVU52PAP5RAF6NAHGLCLRING2FAJGT6T7RGOZYHXFXQCCGXTARWQOSI5B7SPPUNHZT5BU4YCKAP5GQTBXSPGA"
+
+    var fields = '{"_id":0,"userId":0,"datetime":0}'; // _id, userId, datetime, word, win, num, type, timestamp
+
     async.parallel({
       get20q: function (cb) {
         request(reqoptions, function(err, response, html){
@@ -476,16 +480,14 @@ function startGame(userId, callback) {
         });
       },
       getStatsFromMaster: function (cb) {
-        var url = "https://api.mlab.com/api/1/databases/twentyquestions/collections/stats?apiKey=" + MONGOAPIKEY + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0}';
-        // console.log(url);
+        var url = "https://api.mlab.com/api/1/databases/twentyquestions/collections/stats?apiKey=" + MONGOAPIKEY + '&q={"userId":"' + userId + '"}&f=' + fields;
         request(url, function(err, response){
           var playr = JSON.parse(response.body);
           return cb(null, playr);
         });
       },
       getStats: function (cb) {
-        var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f={"_id":0,"userId":0,"datetime":0}';
-
+        var url = getMongoURLForUser(userId) + '&q={"userId":"' + userId + '"}&f=' + fields;
         request(url, function(err, response){
       		var playr = JSON.parse(response.body);
           return cb(null, playr);
