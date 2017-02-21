@@ -9,8 +9,8 @@ const farewellPhrases = ["Please visit www.daryljewkes.com to see live game stat
 const querks = ["Does it growl?", "Does it roll?", "Does it have four legs?", "Is it round?", "Can you lift it?", "Can it help you find your way?", "Does it cry?", "Can it growl?", "Is it tall?", "Is it used by the police?", "Does it purr?", "Does it get wet?", "Does it have lots of seeds?"];
 
 module.exports = {
-	getStartGamePhrase: function (playr) {
-		return getStartGamePhrase(playr);
+	getStartGamePhrase: function (playr, greetingIdx, bePolite) {
+		return getStartGamePhrase(playr, greetingIdx, bePolite);
 	},
 	getFarewellPhrase: function () {
 		return getFarewellPhrase();
@@ -42,23 +42,24 @@ module.exports = {
 	}
 }
 
-function getStartGamePhrase(player) {
-	console.log(player)
+function getStartGamePhrase(player, greetingIdx, bePolite) {
+	console.log(player, greetingIdx, bePolite)
 
 	// if new player
 	if (player.length === 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 
 	var lastGame = player[player.length-1];
 
-	// pick a random welcome
-	var rnd = randomInt(0, 5);
-	// console.log(rnd)
+	// pick a random welcome and mood
+	if (typeof greetingIdx == 'undefined' || greetingIdx > 5 || greetingIdx < 0) greetingIdx = randomInt(0, 5);
+	if (typeof bePolite == 'undefined') bePolite = Math.random() < 0.5 ? true : false;
+	console.log(greetingIdx, bePolite)
 
 	// default
-	if (rnd == 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
+	if (greetingIdx == 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 
 	// how long since last game
-	if (rnd == 1) {
+	if (greetingIdx == 1) {
 		var daysAgo = daydiff(new Date(lastGame.timestamp), new Date());
 		// console.log(daysAgo)
 
@@ -75,15 +76,15 @@ function getStartGamePhrase(player) {
 	}
 
 	// who won last game
-	if (rnd == 2) {
+	if (greetingIdx == 2) {
 		if (lastGame.won == true) {
-			if (randomInt(0, 1) == 0) { 	// praise
+			if (bePolite) { 	// praise
 				"You beat me last time, good .";
 			} else { 	// insult
 
 			}
 		} else {
-			if (randomInt(0, 1) == 0) { 	// praise
+			if (bePolite) { 	// praise
 
 			} else { 	// insult
 
@@ -92,9 +93,16 @@ function getStartGamePhrase(player) {
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
+
+	// anything past this point needs to read the game history
+	for (var i = 0; i < player.length; i++) {
+
+	}
+
+
 	// category
-	if (rnd == 3) {
-		if (randomInt(0, 1) == 0) {
+	if (greetingIdx == 3) {
+		if (bePolite) {
 			// fav cat
 		} else {
 			// least fav cat
@@ -103,8 +111,8 @@ function getStartGamePhrase(player) {
 	}
 
 	// rate score
-	if (rnd == 4) {
-		if (randomInt(0, 1) == 0) {
+	if (greetingIdx == 4) {
+		if (bePolite) {
 			// best score
 		} else {
 			// avg score
@@ -113,13 +121,13 @@ function getStartGamePhrase(player) {
 	}
 
 	// win vs lose
-	if (rnd == 5) {
+	if (greetingIdx == 5) {
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
 	// win or lose streak
-	if (rnd == 6) {
-		if (randomInt(0, 1) == 0) {
+	if (greetingIdx == 6) {
+		if (bePolite) {
 			// win streak
 		} else {
 			// lose streak

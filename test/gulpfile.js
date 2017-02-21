@@ -22,4 +22,5 @@ gulp.task('testAll', function() {
 
 gulp.task('watchAll', function() {
   gulp.watch(['./test*.js'], ['testAll']);
+  gulp.watch(['./../src/*.js'], ['testAll']);
 });

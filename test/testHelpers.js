@@ -76,7 +76,7 @@ const summary = {
 }
 
 var player = [
-  { "num":99, "win": false, "type": "splitDb.js", "timestamp": 1486675626844},
+  { "num":30, "win": false, "type": "Animal", "timestamp":  1486675626844},
   { "num":30, "win": false, "type": "Animal", "timestamp": 1487104127415},
   { "num":17, "win": true, "type": "Animal", "timestamp": 1487514621848},
   { "num":19, "win": true, "type": "Animal", "timestamp": 1487514720865} ]
