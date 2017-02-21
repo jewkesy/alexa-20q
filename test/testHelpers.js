@@ -76,10 +76,38 @@ const summary = {
 }
 
 var player = [
-  { "num":30, "win": false, "type": "Animal", "timestamp":  1486675626844},
-  { "num":30, "win": false, "type": "Animal", "timestamp": 1487104127415},
-  { "num":17, "win": true, "type": "Animal", "timestamp": 1487514621848},
-  { "num":19, "win": true, "type": "Animal", "timestamp": 1487514720865} ]
+  { "num":30, "win": false, "type": "Animal",     "timestamp": 1486675626844},
+  { "num":30, "win": false, "type": "Other",      "timestamp": 1487104127415},
+  { "num":17, "win": true,  "type": "Animal",     "timestamp": 1487514621848},
+  { "num":19, "win": true,  "type": "Animal",     "timestamp": 1487514720865},
+  { "num":23, "win": false, "type": "Vegetable",  "timestamp": 1487668951865},
+  { "word" : "a micrometer" , "num" : 30 , "win" : false , "type" : "Other" , "timestamp" : 1482879032394} ,
+  { "word" : "pleasure" , "num" : 29 , "win" : false , "type" : "Other" , "timestamp" : 1482879232822} ,
+  { "word" : "nachos" , "num" : 30 , "win" : false , "type" : "Other" , "timestamp" : 1482879808652} ,
+  { "word" : "a cheese puff" , "num" : 20 , "win" : true , "type" : "Vegetable" , "timestamp" : 1482879983687} ,
+  { "word" : "a black panther" , "num" : 17 , "win" : true , "type" : "Animal" , "timestamp" : 148313647087} ,
+  { "word" : "a lightbulb" , "num" : 17 , "win" : true , "type" : "Mineral" , "timestamp" : 1483140169112} ,
+  { "word" : "an angel" , "num" : 30 , "win" : false , "type" : "Animal" , "timestamp" : 148314039069} ,
+  { "word" : "an alien (extraterrestial)" , "num" : 31 , "win" : false , "type" : "Other" , "timestamp" : 1483140629559} ,
+  { "word" : "tokoyaki (fried octopus)" , "num" : 31 , "win" : true , "type" : "Unknown" , "timestamp" : 1483477793063} ,
+  { "word" : "a planet" , "num" : 17 , "win" : true , "type" : "Other" , "timestamp" : 1483478703524} ,
+  { "word" : "tomorrow" , "num" : "30" , "win" : false , "type" : "Other" , "timestamp" : 1483561589335} ,
+  { "word" : "a tomato" , "num" : "19" , "win" : true , "type" : "Vegetable" , "timestamp" : 1483562168495} ,
+  { "word" : "asphalt (for paving roads)" , "num" : "17" , "win" : true , "type" : "Mineral" , "timestamp" : 1483912062227} ,
+  { "word" : "a PDA (Personal Digital Assistant)" , "num" : "19" , "win" : true , "type" : "Other" , "timestamp" : 1484336244156} ,
+  { "word" : "a PDA (Personal Digital Assistant)" , "num" : "29" , "win" : false , "type" : "Other" , "timestamp" : 1484336637878} ,
+  { "word" : "a pizza" , "num" : "30" , "win" : false , "type" : "Other" , "timestamp" : 1484860836547} ,
+  { "word" : "a candle" , "num" : "17" , "win" : true , "type" : "Other" , "timestamp" : 1484860997184} ,
+  { "word" : "a fox" , "num" : "30" , "win" : false , "type" : "Animal" , "timestamp" : 1485119941328} ,
+  { "word" : "beer" , "num" : "18" , "win" : true , "type" : "Vegetable" , "timestamp" : 1485121171353} ,
+  { "word" : "an elephant" , "num" : "17" , "win" : true , "type" : "Animal" , "timestamp" : 1485374654651} ,
+  { "word" : "a tabby cat" , "num" : "20" , "win" : true , "type" : "Animal" , "timestamp" : 1485375188554} ,
+  { "word" : "a puppy (dog)" , "num" : "20" , "win" : true , "type" : "Animal" , "timestamp" : 1485375587154} ,
+  { "word" : "a husky (dog)" , "num" : "20" , "win" : true , "type" : "Animal" , "timestamp" : 1485456394548} ,
+  { "word" : "a cordless phone" , "num" : "19" , "win" : true , "type" : "Other" , "timestamp" : 1486674294474} ,
+  { "word" : "a diamond" , "num" : "11" , "win" : true , "type" : "Mineral" , "timestamp" : 1486674511826} ]
+
+player.sort(sortByTimestamp);
 
 describe("src/helpers.js", function () {
     describe("get phrases", function () {
@@ -212,6 +240,14 @@ describe("src/helpers.js", function () {
         it("", function () {});
     });
 });
+
+function sortByTimestamp(a,b) {
+  if (a.timestamp < b.timestamp)
+    return -1;
+  if (a.timestamp > b.timestamp)
+    return 1;
+  return 0;
+}
 
 // function getGuessText(guessText) {
 //     // Question 17.  I am guessing that it is a panther?
