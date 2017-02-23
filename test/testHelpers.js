@@ -111,93 +111,145 @@ player.sort(sortByTimestamp);
 
 describe("src/helpers.js", function () {
     describe("get phrases", function () {
-        describe("getStartGamePhrase: function (player) {}", function () {
-            it("gets a start phrase for new player", function () {
-                var retVal = helpers.getStartGamePhrase([]);
+
+      // greetingIdx
+        // 0 - default
+        // 1 - how long since last game
+        // 2 - who won last game
+        // 3 - category
+        // 4 - rate score
+        // 5 - win or lose streak
+
+      // bePolite {true : false}
+
+      describe("getStartGamePhrase: function (player, greetingIdx, bePolite) {}", function () {
+          it("gets a start phrase for new player", function () {
+              var retVal = helpers.getStartGamePhrase([]);
+              assert.notEqual(retVal, "");
+          });
+
+          describe ("greetingIdx 0 or null", function () {
+            it("gets a default welcome", function () {
+              var retVal = helpers.getStartGamePhrase(player, 0);
+              assert.notEqual(retVal, "");
+            })
+          });
+
+          describe ("greetingIdx 1", function () {
+            it("Alexa polite", function () {
+              var retVal = helpers.getStartGamePhrase(player, 1, true);
+              assert.notEqual(retVal, "");
+            });
+            it("Alexa harsh", function () {
+              var retVal = helpers.getStartGamePhrase(player, 1, false);
+              assert.notEqual(retVal, "");
+            });
+          });
+
+          describe ("greetingIdx 2", function () {
+            describe("Alexa won", function () {
+              it("Alexa polite", function () {
+                var retVal = helpers.getStartGamePhrase(player, 2, true);
                 assert.notEqual(retVal, "");
-            });
-
-            it("Detects when last played was yesterday and you won", function () {
-
-              var today = new Date();
-              var yesterday = new Date(today);
-              yesterday.setDate(today.getDate() - 1);
-
-              var yesterdayTS = yesterday.getTime();
-              var p = JSON.parse(JSON.stringify(player));
-              p.push({
-                num: 10,
-                win: true,
-                type: 'Other',
-                timestamp: yesterdayTS
-              })
-                var retVal = helpers.getStartGamePhrase(p);
+              });
+              it("Alexa harsh", function () {
+                var retVal = helpers.getStartGamePhrase(player, 2, false);
                 assert.notEqual(retVal, "");
+              });
             });
-
-            it("Detects when last played was yesterday and you lost", function () {
-
-              var today = new Date();
-              var yesterday = new Date(today);
-              yesterday.setDate(today.getDate() - 1);
-
-              var yesterdayTS = yesterday.getTime();
-              var p = JSON.parse(JSON.stringify(player));
-              p.push({
-                num: 26,
-                win: false,
-                type: 'Other',
-                timestamp: yesterdayTS
-              })
-                var retVal = helpers.getStartGamePhrase(p);
+            describe("Alexa lost", function () {
+              it("Alexa polite", function () {
+                var retVal = helpers.getStartGamePhrase(player, 2, true);
                 assert.notEqual(retVal, "");
-            });
-
-
-
-
-            it("gets a start phrase", function () {
-                var retVal = helpers.getStartGamePhrase(player);
+              });
+              it("Alexa harsh", function () {
+                var retVal = helpers.getStartGamePhrase(player, 2, false);
                 assert.notEqual(retVal, "");
+              });
             });
-            it("it has a full stop and a space at the end", function () {
-                var retVal = helpers.getStartGamePhrase(player).slice(-2);
-                assert.equal(retVal, ". ");
-            });
-        });
+          });
 
-        describe("getFarewellPhrase: function () {}", function () {
-            it("gets a farewell phrase", function () {
-                var retVal = helpers.getFarewellPhrase();
-                assert.notEqual(retVal, "");
-            });
-            it("it has a full stop and a space at the end", function () {
-                var retVal = helpers.getFarewellPhrase().slice(-2);
-                assert.equal(retVal, ". ");
-            });
-        });
+          it("Detects when last played was yesterday and you won", function () {
 
-        describe("getWinPhrase: function () {}", function () {
-            it("gets a win phrase", function () {
-                var retVal = helpers.getWinPhrase();
-                assert.notEqual(retVal, "");
-            });
-            it("it has a full stop and a space at the end", function () {
-                var retVal = helpers.getWinPhrase().slice(-2);
-                assert.equal(retVal, ". ");
-            });
-        });
+            var today = new Date();
+            var yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
 
-        describe("getLostPhrase: function () {}", function () {
-            it("gets a lose phrase", function () {
-                var retVal = helpers.getLostPhrase();
-                assert.notEqual(retVal, "");
-            });
-            it("it has a full stop and a space at the end", function () {
-                var retVal = helpers.getLostPhrase().slice(-2);
-                assert.equal(retVal, ". ");
-            });
-        });
+            var yesterdayTS = yesterday.getTime();
+            var p = JSON.parse(JSON.stringify(player));
+            p.push({
+              num: 10,
+              win: true,
+              type: 'Other',
+              timestamp: yesterdayTS
+            })
+              var retVal = helpers.getStartGamePhrase(p);
+              assert.notEqual(retVal, "");
+          });
+
+          it("Detects when last played was yesterday and you lost", function () {
+
+            var today = new Date();
+            var yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+
+            var yesterdayTS = yesterday.getTime();
+            var p = JSON.parse(JSON.stringify(player));
+            p.push({
+              num: 26,
+              win: false,
+              type: 'Other',
+              timestamp: yesterdayTS
+            })
+              var retVal = helpers.getStartGamePhrase(p);
+              assert.notEqual(retVal, "");
+          });
+
+
+
+
+          it("gets a start phrase", function () {
+              var retVal = helpers.getStartGamePhrase(player);
+              assert.notEqual(retVal, "");
+          });
+          it("it has a full stop and a space at the end", function () {
+              var retVal = helpers.getStartGamePhrase(player).slice(-2);
+              assert.equal(retVal, ". ");
+          });
+      });
+
+      describe("getFarewellPhrase: function () {}", function () {
+          it("gets a farewell phrase", function () {
+              var retVal = helpers.getFarewellPhrase();
+              assert.notEqual(retVal, "");
+          });
+          it("it has a full stop and a space at the end", function () {
+              var retVal = helpers.getFarewellPhrase().slice(-2);
+              assert.equal(retVal, ". ");
+          });
+      });
+
+      describe("getWinPhrase: function () {}", function () {
+          it("gets a win phrase", function () {
+              var retVal = helpers.getWinPhrase();
+              assert.notEqual(retVal, "");
+          });
+          it("it has a full stop and a space at the end", function () {
+              var retVal = helpers.getWinPhrase().slice(-2);
+              assert.equal(retVal, ". ");
+          });
+      });
+
+      describe("getLostPhrase: function () {}", function () {
+          it("gets a lose phrase", function () {
+              var retVal = helpers.getLostPhrase();
+              assert.notEqual(retVal, "");
+          });
+          it("it has a full stop and a space at the end", function () {
+              var retVal = helpers.getLostPhrase().slice(-2);
+              assert.equal(retVal, ". ");
+          });
+      });
     });
 
     describe("buildNaturalLangList: function (items, finalWord) {}", function () {

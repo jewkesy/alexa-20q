@@ -43,7 +43,8 @@ module.exports = {
 }
 
 function getStartGamePhrase(player, greetingIdx, bePolite) {
-	console.log(player, greetingIdx, bePolite)
+	// console.log(player);
+	console.log(greetingIdx, bePolite);
 
 	// if new player
 	if (player.length === 0) return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
@@ -93,12 +94,10 @@ function getStartGamePhrase(player, greetingIdx, bePolite) {
 		return startGamePhrases[randomInt(0, startGamePhrases.length)] + ". ";
 	}
 
-
 	// anything past this point needs to read the game history
 	for (var i = 0; i < player.length; i++) {
-
+		console.log(player[i].num);
 	}
-
 
 	// category
 	if (greetingIdx == 3) {
